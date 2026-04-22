@@ -5,7 +5,7 @@ Thank you for your interest in contributing to UseAgents! This document provides
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/useagents.git`
+2. Clone your fork: `git clone https://github.com/thesethrose/useagents.git`
 3. Install dependencies: `npm install`
 4. Build the project: `npm run build`
 5. Run tests: `npm test` (when available)

@@ -19,7 +19,7 @@ Most AI agent platforms require cloud infrastructure or complex setup. UseAgents
 ### Installation
 
 ```bash
-npm install -g useagents
+npm install -g @thesethrose/useagents
 ```
 
 ### Install an Agent
@@ -167,7 +167,7 @@ tools:                            # available tools
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/useagents.git
+git clone https://github.com/thesethrose/useagents.git
 cd useagents
 
 # Install dependencies
