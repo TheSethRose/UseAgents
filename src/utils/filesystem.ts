@@ -11,6 +11,7 @@ export const CACHE_DIR = join(USEAGENTS_DIR, "cache");
 
 export const INSTALLS_FILE = join(STATE_DIR, "installs.json");
 export const LOGS_FILE = join(STATE_DIR, "logs.jsonl");
+export const AUDIT_LOGS_FILE = join(STATE_DIR, "audit.jsonl");
 export const PERMISSIONS_FILE = join(STATE_DIR, "permissions.json");
 export const SECRETS_FILE = join(SECRETS_DIR, "secrets.json");
 

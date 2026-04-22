@@ -1,5 +1,4 @@
-import { pathExists, getAgentActivePath, removeDir, getAgentRuntimeDir, readJson, writeJson, INSTALLS_FILE, setActiveVersion } from "../utils/filesystem.js";
-import { loadManifest } from "../utils/manifest.js";
+import { pathExists, getAgentActivePath, readJson, INSTALLS_FILE } from "../utils/filesystem.js";
 import { UseAgentsError } from "../utils/errors.js";
 import { installCommand } from "./install.js";
 import type { InstallRecord } from "../types.js";

@@ -1,6 +1,6 @@
-import { readFile, access } from "node:fs/promises";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
+import { cwd } from "node:process";
 import { loadManifest } from "../utils/manifest.js";
 import { UseAgentsError } from "../utils/errors.js";
 import {
@@ -61,16 +61,30 @@ async function cloneGitRepo(url: string): Promise<string> {
   return cachePath;
 }
 
+export async function resolveLocalSourcePath(source: string): Promise<string> {
+  const directPath = join(cwd(), source);
+  if (await pathExists(directPath)) {
+    return directPath;
+  }
+
+  const looksLikeAlias = !source.includes("/") && !source.includes("\\") && !source.startsWith(".");
+  if (looksLikeAlias) {
+    const examplePath = join(cwd(), "examples", source);
+    if (await pathExists(examplePath)) {
+      return examplePath;
+    }
+  }
+
+  throw new UseAgentsError("Source path does not exist", "source_not_found", { path: directPath });
+}
+
 export async function installCommand(source: string): Promise<void> {
   const isLocal = !source.startsWith("github:") && !source.startsWith("https://") && !source.startsWith("git@");
   let sourcePath: string;
   let resolvedSource = source;
   
   if (isLocal) {
-    sourcePath = join(process.cwd(), source);
-    if (!await pathExists(sourcePath)) {
-      throw new UseAgentsError("Source path does not exist", "source_not_found", { path: sourcePath });
-    }
+    sourcePath = await resolveLocalSourcePath(source);
     resolvedSource = sourcePath;
   } else {
     const git = parseGitSource(source);

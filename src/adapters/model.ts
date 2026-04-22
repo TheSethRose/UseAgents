@@ -53,7 +53,7 @@ function createOpenRouterAdapter(): ModelAdapter {
 
 export function createModelAdapter(
   provider: string,
-  secrets: Record<string, string>
+  _secrets: Record<string, string>
 ): ModelAdapter {
   switch (provider.toLowerCase()) {
     case "openrouter":

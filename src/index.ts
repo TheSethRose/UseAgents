@@ -32,6 +32,7 @@ program
   .command("run <agent-name>")
   .description("Run an installed agent")
   .option("-i, --input <json>", "JSON input to pass to agent")
+  .option("--sandbox", "Run agent in sandbox mode with restricted tool access")
   .action(runCommand);
 
 program

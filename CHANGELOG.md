@@ -8,44 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Core CLI scaffold with Commander.js (`agent` binary)
-- Agent manifest validation using Zod (`agent.yaml`)
-- Local agent installation from folder paths
-- Git-based agent installation (GitHub shorthand + HTTPS URLs)
-- Versioned runtime storage (`~/.useagents/runtimes/`)
-- Active version symlinks (`~/.useagents/active/`)
-- Runtime loader with `run(input, ctx)` contract
-- Built-in tool registry: `echo.text`, `http.fetch`, `fs.readText`, `fs.writeText`
-- Permission enforcement (network, filesystem, secrets)
-- OpenRouter model adapter with streaming support
-- Secret management (`~/.useagents/secrets/secrets.json` with 0600 perms)
-- JSONL execution logging (`~/.useagents/state/logs.jsonl`)
-- Structured error handling with `--debug` flag
-- CLI commands: `install`, `run`, `info`, `list`, `update`, `remove`, `logs`, `validate`, `secret`
-- `hello-world` example agent
-
-### Changed
-- N/A
-
-### Deprecated
-- N/A
-
-### Removed
-- N/A
-
-### Fixed
-- N/A
+- Permission prompt on first run (grant/deny with remembered choice in `~/.useagents/state/permissions.json`)
+- File access audit logging (`~/.useagents/state/audit.jsonl` records read/write operations)
+- Network request allowlisting by domain with wildcard support (`*.example.com`)
+- `--sandbox` flag for `agent run` to force isolated execution
+- Tool-level sandbox policy (allow/deny specific tools in sandbox mode)
+- Docker-based sandboxed runtime (optional, per-agent, with resource limits; JavaScript-only for now, multi-runtime in v0.4.0)
 
 ### Security
-- N/A
+- All file system and network access is now audited
+- Permission grants are persisted and validated on each run
+- Sandbox mode runs agents in isolated Docker containers with no network access
 
 ## [Roadmap]
-
-### 0.2.0 - Sandboxing & Security
-- [ ] Deno/QuickJS sandboxed runtime (optional)
-- [ ] Permission prompt on first run (grant/deny)
-- [ ] File access audit logging
-- [ ] Network request allowlisting by domain
 
 ### 0.3.0 - Registry & Distribution
 - [ ] `useagents.dev` web registry
@@ -53,9 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Semantic version resolution (`^`, `~`)
 - [ ] Agent dependency management
 
-### 0.4.0 - Advanced Runtime
-- [ ] Python runtime support
-- [ ] Docker-based isolation
+### 0.4.0 - Multi-Runtime & Isolation
+- [ ] Python runtime support (first non-JavaScript runtime)
+- [ ] Rust runtime support
+- [ ] Runtime-agnostic Docker isolation (extending v0.2.0 sandbox to all languages)
 - [ ] Streaming output from agents
 - [ ] Background agent execution (`agent run --detach`)
 
@@ -73,5 +49,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-04-22
 
 ### Added
-- Initial MVP release
-- All features listed under [Unreleased]
+- Core CLI scaffold with Commander.js (`agent` binary)
+- Agent manifest validation using Zod (`agent.yaml`)
+- Local agent installation from folder paths
+- Git-based agent installation (GitHub shorthand + HTTPS URLs)
+- Versioned runtime storage (`~/.useagents/runtimes/`)
+- Active version symlinks (`~/.useagents/active/`)
+- Runtime loader with `run(input, ctx)` contract
+- Built-in tool registry: `echo.text`, `http.fetch`, `fs.readText`, `fs.writeText`
+- Permission enforcement (network, filesystem, secrets)
+- OpenRouter model adapter with streaming support
+- Secret management (`~/.useagents/secrets/secrets.json` with 0600 perms)
+- JSONL execution logging (`~/.useagents/state/logs.jsonl`)
+- Structured error handling with `--debug` flag
+- CLI commands: `install`, `run`, `info`, `list`, `update`, `remove`, `logs`, `validate`, `secret`
+- `hello-world` example agent

@@ -41,6 +41,29 @@ agent install https://github.com/your-org/hello-world
 agent run hello-world --input '{"name": "Developer"}'
 ```
 
+### Try the OpenClaw Example
+
+```bash
+agent install openclaw
+agent run openclaw
+```
+
+This example installs OpenClaw through UseAgents: it checks whether `openclaw` is already installed and, if not, can guide or initiate the documented OpenClaw installer before handing you off to `openclaw onboard --install-daemon`.
+
+It is intentionally **not** a new manifest capability for arbitrary remote software installs during `agent install`; it is a self-contained OpenClaw example package that handles the documented install and onboarding handoff.
+
+### Run in Sandbox Mode
+
+```bash
+agent run hello-world --sandbox --input '{"name": "Developer"}'
+```
+
+Sandbox mode runs agents in an isolated Docker container with:
+- No network access
+- Read-only filesystem
+- Memory and CPU limits
+- Tool restrictions
+
 ### Manage Agents
 
 ```bash
@@ -114,11 +137,19 @@ model:                            # optional LLM config
 
 permissions:                      # what the agent needs
   network: false                  # internet access?
+  # or restrict to specific domains:
+  # network:
+  #   enabled: true
+  #   domains: ["api.example.com", "*.openai.com"]
   filesystem:
     read: []                      # paths allowed for reading
     write: []                     # paths allowed for writing
   secrets:
     - OPENROUTER_API_KEY          # required secrets
+  sandbox:                        # optional sandbox policy
+    enabled: false
+    tools:                        # tools allowed in sandbox mode
+      - echo.text
 
 tools:                            # available tools
   - echo.text                     # echo input back
@@ -140,9 +171,10 @@ tools:                            # available tools
 ├── active/            # Symlinks to active versions
 │   └── hello-world -> ../runtimes/hello-world/1.0.0
 ├── state/
-│   ├── installs.json  # Install registry
-│   ├── logs.jsonl     # Execution history
-│   └── permissions.json
+│   ├── installs.json   # Install registry
+│   ├── logs.jsonl      # Execution history
+│   ├── audit.jsonl     # File/network access audit log
+│   └── permissions.json # Granted permission records
 ├── secrets/
 │   └── secrets.json   # Encrypted secrets (0600 perms)
 └── cache/             # Git clone cache
@@ -153,7 +185,7 @@ tools:                            # available tools
 | Command | Description |
 |---------|-------------|
 | `agent install <source>` | Install from local path or git repo |
-| `agent run <agent> [-i <json>]` | Execute an agent |
+| `agent run <agent> [-i <json>] [--sandbox]` | Execute an agent |
 | `agent info <agent>` | Show agent metadata |
 | `agent list` | List installed agents |
 | `agent update <agent>` | Update to latest version |
@@ -182,15 +214,21 @@ node dist/index.js --help
 # Test with example agent
 node dist/index.js install ./examples/hello-world
 node dist/index.js run hello-world
+
+# Try the OpenClaw example
+node dist/index.js install openclaw
+node dist/index.js run openclaw
 ```
 
 ## Security Model
 
 1. **Manifest declarations**: Agents must declare all permissions in `agent.yaml`
-2. **Secret isolation**: Secrets are stored separately, injected only when declared
-3. **Filesystem sandboxing**: Agents can only access declared paths
-4. **Network control**: Internet access is opt-in per agent
-5. **Audit logging**: All executions logged to `~/.useagents/state/logs.jsonl`
+2. **Permission prompts**: First run requires explicit user approval of requested permissions
+3. **Secret isolation**: Secrets are stored separately, injected only when declared
+4. **Filesystem sandboxing**: Agents can only access declared paths
+5. **Network control**: Internet access is opt-in per agent, with domain allowlisting
+6. **Audit logging**: All executions and file/network access logged to `~/.useagents/state/`
+7. **Docker sandboxing**: Optional containerized execution with resource limits and tool restrictions
 
 ## Roadmap
 

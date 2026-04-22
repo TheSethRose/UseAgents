@@ -1,5 +1,4 @@
 import { readJsonl, LOGS_FILE } from "../utils/filesystem.js";
-import { UseAgentsError } from "../utils/errors.js";
 import type { LogEntry } from "../types.js";
 
 export async function logsCommand(agentName?: string): Promise<void> {

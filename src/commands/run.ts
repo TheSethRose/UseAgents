@@ -1,14 +1,15 @@
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { pathExists, getAgentActivePath, appendJsonl, LOGS_FILE } from "../utils/filesystem.js";
+import { pathExists, getAgentActivePath, appendJsonl, LOGS_FILE, AUDIT_LOGS_FILE } from "../utils/filesystem.js";
 import { UseAgentsError } from "../utils/errors.js";
-import type { AgentContext, Manifest } from "../types.js";
+import type { AgentContext } from "../types.js";
 import { createModelAdapter } from "../adapters/model.js";
-import { createToolRegistry } from "../adapters/tools.js";
+import { createToolRegistry, setAuditLogConfig } from "../adapters/tools.js";
 import { loadSecrets } from "./secret.js";
 import { Logger } from "../utils/logger.js";
+import { loadPermissionsStore, hasGrantedPermissions, promptPermissionGrant } from "../utils/permissions.js";
+import { isDockerAvailable, runInSandbox } from "../utils/sandbox.js";
 
-export async function runCommand(agentName: string, options: { input?: string }): Promise<void> {
+export async function runCommand(agentName: string, options: { input?: string; sandbox?: boolean }): Promise<void> {
   const activePath = getAgentActivePath(agentName);
   
   if (!await pathExists(activePath)) {
@@ -22,7 +23,15 @@ export async function runCommand(agentName: string, options: { input?: string })
   
   const { loadManifest } = await import("../utils/manifest.js");
   const manifest = await loadManifest(activePath);
-  
+
+  const permissionsStore = await loadPermissionsStore();
+  if (!hasGrantedPermissions(permissionsStore, agentName, manifest)) {
+    const granted = await promptPermissionGrant(agentName, manifest);
+    if (!granted) {
+      throw new UseAgentsError("Permission denied by user", "permission_denied");
+    }
+  }
+
   const entrypointPath = join(activePath, manifest.runtime.entrypoint);
   if (!await pathExists(entrypointPath)) {
     throw new UseAgentsError(
@@ -59,8 +68,31 @@ export async function runCommand(agentName: string, options: { input?: string })
     ? createModelAdapter(manifest.model.provider, secrets)
     : null;
   
-  const toolRegistry = createToolRegistry(manifest.permissions, manifest.tools, activePath);
-  
+  const sandboxMode = options.sandbox || manifest.permissions.sandbox?.enabled || false;
+  if (sandboxMode) {
+    console.log("Running in sandbox mode");
+  }
+  setAuditLogConfig(AUDIT_LOGS_FILE, agentName);
+
+  if (sandboxMode) {
+    const dockerAvailable = await isDockerAvailable();
+    if (dockerAvailable) {
+      try {
+        const result = await runInSandbox(activePath, input);
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      } catch (error) {
+        if (error instanceof UseAgentsError && error.type === "docker_not_found") {
+          console.warn("Docker not available, falling back to local sandbox");
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
+  const toolRegistry = createToolRegistry(manifest.permissions, manifest.tools, activePath, sandboxMode);
+
   const ctx: AgentContext = {
     agent: {
       name: manifest.name,

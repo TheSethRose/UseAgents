@@ -17,7 +17,13 @@ export const manifestSchema = z.object({
   inputs: z.record(z.unknown()).optional(),
   outputs: z.record(z.unknown()).optional(),
   permissions: z.object({
-    network: z.boolean().default(false),
+    network: z.union([
+      z.boolean().default(false),
+      z.object({
+        enabled: z.boolean().default(false),
+        domains: z.array(z.string()).default([]),
+      }),
+    ]).default(false),
     filesystem: z
       .object({
         read: z.array(z.string()).default([]),
@@ -25,6 +31,12 @@ export const manifestSchema = z.object({
       })
       .default({ read: [], write: [] }),
     secrets: z.array(z.string()).default([]),
+    sandbox: z
+      .object({
+        enabled: z.boolean().default(false),
+        tools: z.array(z.string()).default([]),
+      })
+      .optional(),
   }),
   tools: z.array(z.string()).default([]),
 });
@@ -99,6 +111,28 @@ export interface LogEntry {
   status: "success" | "error";
   durationMs: number;
   error?: string;
+}
+
+export interface AuditLogEntry {
+  timestamp: string;
+  agentName: string;
+  operation: "fs.read" | "fs.write" | "network.fetch" | "tool.call";
+  tool?: string;
+  path?: string;
+  url?: string;
+  allowed: boolean;
+  details?: Record<string, unknown>;
+}
+
+export interface PermissionRecord {
+  agentName: string;
+  grantedAt: string;
+  permissions: {
+    network: boolean;
+    filesystem: { read: string[]; write: string[] };
+    secrets: string[];
+    tools: string[];
+  };
 }
 
 export interface CliError {

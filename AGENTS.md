@@ -21,10 +21,12 @@ When documentation conflicts with `src/` or `package.json`, treat the implementa
 
 Use the package scripts defined in [`package.json`](./package.json).
 
-- `bun run typecheck` — required before claiming code changes are complete
+- `bun run typecheck` — typecheck src and test files
+- `bun run lint` — lint src and test files
+- `bun run test` — run the Vitest suite
+- `bun run check` — run all three (typecheck + lint + test)
 - `bun run build` — required before claiming code changes are complete
 - `bun run start` — run the built CLI locally
-- There is currently no automated test suite; do not claim tests passed unless you added and ran them
 
 ## Architecture map
 

@@ -43,5 +43,5 @@ export async function loadManifest(path: string): Promise<Manifest> {
 }
 
 export function validateEntrypoint(manifest: Manifest, basePath: string): void {
-  const entrypointPath = join(basePath, manifest.runtime.entrypoint);
+  join(basePath, manifest.runtime.entrypoint);
 }
