@@ -209,4 +209,4 @@ Contributions welcome! Please read our [Contributing Guide](CONTRIBUTING.md) fir
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
