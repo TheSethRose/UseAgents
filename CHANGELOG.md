@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-04-22
+
+### Added
+- Managed integration examples for `goclaw`, `picoclaw`, `pi-mono`, `claude-code`, `gemini-cli`, `qwen-cli`, and `nanoclaw`
+- Interim registry entries for the new managed integrations so they can be installed and tested locally
+
 ### Added
 - Permission prompt on first run (grant/deny with remembered choice in `~/.useagents/state/permissions.json`)
 - File access audit logging (`~/.useagents/state/audit.jsonl` records read/write operations)
@@ -23,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Roadmap]
 
 ### 0.3.0 - Registry & Distribution
-- [ ] `useagents.dev` web registry
+- [ ] `useagents.io` web registry
 - [ ] `agent search <query>` command
 - [ ] Semantic version resolution (`^`, `~`)
 - [ ] Agent dependency management

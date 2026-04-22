@@ -4,6 +4,12 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
 
+export const DEFAULT_REGISTRY_URL = "https://registry.useagents.io/v1";
+
+export function getRegistryUrl(): string {
+  return process.env.USEAGENTS_REGISTRY ?? DEFAULT_REGISTRY_URL;
+}
+
 export type RegistryEntryType = "packaged-agent" | "managed-integration";
 
 export interface RegistryEntry {
@@ -12,6 +18,34 @@ export interface RegistryEntry {
 }
 
 export const interimRegistry: Record<string, RegistryEntry> = {
+  "goclaw": {
+    path: join(PROJECT_ROOT, "examples", "goclaw"),
+    type: "managed-integration",
+  },
+  "picoclaw": {
+    path: join(PROJECT_ROOT, "examples", "picoclaw"),
+    type: "managed-integration",
+  },
+  "pi-mono": {
+    path: join(PROJECT_ROOT, "examples", "pi-mono"),
+    type: "managed-integration",
+  },
+  "claude-code": {
+    path: join(PROJECT_ROOT, "examples", "claude-code"),
+    type: "managed-integration",
+  },
+  "gemini-cli": {
+    path: join(PROJECT_ROOT, "examples", "gemini-cli"),
+    type: "managed-integration",
+  },
+  "qwen-cli": {
+    path: join(PROJECT_ROOT, "examples", "qwen-cli"),
+    type: "managed-integration",
+  },
+  "nanoclaw": {
+    path: join(PROJECT_ROOT, "examples", "nanoclaw"),
+    type: "managed-integration",
+  },
   "openclaw": {
     path: join(PROJECT_ROOT, "examples", "openclaw"),
     type: "managed-integration",

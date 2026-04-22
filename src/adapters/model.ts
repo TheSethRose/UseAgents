@@ -22,7 +22,7 @@ function createOpenRouterAdapter(): ModelAdapter {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://useagents.dev",
+          "HTTP-Referer": "https://useagents.io",
           "X-Title": "UseAgents",
         },
         body: JSON.stringify(body),

@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "name": "qwen-cli-integration",
+  "version": "1.0.0",
+  "description": "Managed integration wrapper for Qwen CLI"
+}

@@ -10,3 +10,4 @@ coverage/
 *.tgz
 repomix-output.xml
 repomix.config.jsonc
+website/
