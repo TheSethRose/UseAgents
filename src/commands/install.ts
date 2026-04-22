@@ -80,12 +80,12 @@ export async function resolveLocalSourcePath(source: string): Promise<string> {
   throw new UseAgentsError("Source path does not exist", "source_not_found", { path: directPath });
 }
 
-export async function installCommand(source: string): Promise<void> {
+export async function installCommand(source: string, options?: { force?: boolean; verbose?: boolean }): Promise<void> {
   const registryEntry = resolveInRegistry(source);
 
   if (registryEntry?.type === "managed-integration") {
     const integration = await loadManagedIntegration(registryEntry.path);
-    const result = await integration.install({});
+    const result = await integration.install({ force: options?.force });
     await upsertIntegrationRecord({
       name: integration.name,
       kind: "managed-external",
@@ -125,7 +125,13 @@ export async function installCommand(source: string): Promise<void> {
   const runtimeDir = getAgentRuntimeDir(manifest.name, manifest.version);
   
   if (await pathExists(runtimeDir)) {
-    console.log(`Agent ${manifest.name}@${manifest.version} already installed. Overwriting...`);
+    if (!options?.force) {
+      console.log(`Agent ${manifest.name}@${manifest.version} already installed. Use --force to overwrite.`);
+      return;
+    }
+    if (options?.verbose) {
+      console.log(`==> Removing existing ${manifest.name}@${manifest.version}`);
+    }
     await removeDir(runtimeDir);
   }
   

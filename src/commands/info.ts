@@ -5,42 +5,54 @@ import { resolveInRegistry, isManagedIntegration } from "../registry.js";
 import { loadManagedIntegration, formatIntegrationResult } from "../utils/integrations.js";
 import type { InstallRecord } from "../types.js";
 
-export async function infoCommand(agentName: string): Promise<void> {
-  if (isManagedIntegration(agentName)) {
-    const entry = resolveInRegistry(agentName)!;
-    const integration = await loadManagedIntegration(entry.path);
-    const result = await integration.info();
-    formatIntegrationResult(result);
-    return;
+export async function infoCommand(agentName: string | string[], ...rest: unknown[]): Promise<void> {
+  const names = Array.isArray(agentName) ? agentName : typeof agentName === "string" ? [agentName, ...rest.filter((a): a is string => typeof a === "string")] : [];
+
+  if (names.length === 0) {
+    throw new UseAgentsError("No agent specified", "missing_argument");
   }
 
-  const activePath = getAgentActivePath(agentName);
+  for (const name of names) {
+    if (names.length > 1) {
+      console.log(`==> ${name}`);
+    }
 
-  if (!await pathExists(activePath)) {
-    throw new UseAgentsError("Agent not found", "agent_not_found", { name: agentName });
+    if (isManagedIntegration(name)) {
+      const entry = resolveInRegistry(name)!;
+      const integration = await loadManagedIntegration(entry.path);
+      const result = await integration.info();
+      formatIntegrationResult(result);
+      continue;
+    }
+
+    const activePath = getAgentActivePath(name);
+
+    if (!await pathExists(activePath)) {
+      throw new UseAgentsError("Agent not found", "agent_not_found", { name });
+    }
+
+    const manifest = await loadManifest(activePath);
+    const installs = await readJson<InstallRecord[]>(INSTALLS_FILE) || [];
+    const install = installs.find((i) => i.name === name);
+
+    console.log(`Name: ${manifest.name}`);
+    console.log(`Version: ${manifest.version}`);
+    console.log(`Description: ${manifest.description}`);
+    console.log(`Runtime: ${manifest.runtime.type}`);
+    console.log(`Entrypoint: ${manifest.runtime.entrypoint}`);
+
+    if (manifest.model) {
+      console.log(`Model: ${manifest.model.provider}/${manifest.model.model}`);
+    }
+
+    console.log(`Install path: ${activePath}`);
+    console.log(`Source: ${install?.source || "unknown"}`);
+    console.log(`Installed: ${install?.installedAt || "unknown"}`);
+    console.log(`\nPermissions:`);
+    console.log(`  Network: ${manifest.permissions.network ? "yes" : "no"}`);
+    console.log(`  Secrets: ${manifest.permissions.secrets.join(", ") || "none"}`);
+    console.log(`  Tools: ${manifest.tools.join(", ") || "none"}`);
+    console.log(`  Filesystem read: ${manifest.permissions.filesystem.read.join(", ") || "none"}`);
+    console.log(`  Filesystem write: ${manifest.permissions.filesystem.write.join(", ") || "none"}`);
   }
-
-  const manifest = await loadManifest(activePath);
-  const installs = await readJson<InstallRecord[]>(INSTALLS_FILE) || [];
-  const install = installs.find((i) => i.name === agentName);
-
-  console.log(`Name: ${manifest.name}`);
-  console.log(`Version: ${manifest.version}`);
-  console.log(`Description: ${manifest.description}`);
-  console.log(`Runtime: ${manifest.runtime.type}`);
-  console.log(`Entrypoint: ${manifest.runtime.entrypoint}`);
-
-  if (manifest.model) {
-    console.log(`Model: ${manifest.model.provider}/${manifest.model.model}`);
-  }
-
-  console.log(`Install path: ${activePath}`);
-  console.log(`Source: ${install?.source || "unknown"}`);
-  console.log(`Installed: ${install?.installedAt || "unknown"}`);
-  console.log(`\nPermissions:`);
-  console.log(`  Network: ${manifest.permissions.network ? "yes" : "no"}`);
-  console.log(`  Secrets: ${manifest.permissions.secrets.join(", ") || "none"}`);
-  console.log(`  Tools: ${manifest.tools.join(", ") || "none"}`);
-  console.log(`  Filesystem read: ${manifest.permissions.filesystem.read.join(", ") || "none"}`);
-  console.log(`  Filesystem write: ${manifest.permissions.filesystem.write.join(", ") || "none"}`);
 }
