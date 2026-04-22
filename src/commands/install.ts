@@ -16,6 +16,13 @@ import {
 } from "../utils/filesystem.js";
 import type { InstallRecord } from "../types.js";
 
+async function ensureEsmPackageJson(runtimeDir: string): Promise<void> {
+  const pkgPath = join(runtimeDir, "package.json");
+  if (!await pathExists(pkgPath)) {
+    await writeJson(pkgPath, { type: "module" });
+  }
+}
+
 function parseGitSource(source: string): { url: string; shorthand: boolean } {
   if (source.startsWith("github:")) {
     const [, owner, repo] = source.match(/^github:([^/]+)\/(.+)$/) || [];
@@ -81,6 +88,7 @@ export async function installCommand(source: string): Promise<void> {
   }
   
   await copyDir(sourcePath, runtimeDir);
+  await ensureEsmPackageJson(runtimeDir);
   await setActiveVersion(manifest.name, manifest.version);
   
   const installs = await readJson<InstallRecord[]>(INSTALLS_FILE) || [];

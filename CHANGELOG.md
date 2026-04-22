@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Core CLI scaffold with Commander.js (`ua` binary)
+- Core CLI scaffold with Commander.js (`agent` binary)
 - Agent manifest validation using Zod (`agent.yaml`)
 - Local agent installation from folder paths
 - Git-based agent installation (GitHub shorthand + HTTPS URLs)
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 0.3.0 - Registry & Distribution
 - [ ] `useagents.dev` web registry
-- [ ] `ua search <query>` command
+- [ ] `agent search <query>` command
 - [ ] Semantic version resolution (`^`, `~`)
 - [ ] Agent dependency management
 
@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Python runtime support
 - [ ] Docker-based isolation
 - [ ] Streaming output from agents
-- [ ] Background agent execution (`ua run --detach`)
+- [ ] Background agent execution (`agent run --detach`)
 
 ### 0.5.0 - IDE Integration
 - [ ] VS Code extension for agent development

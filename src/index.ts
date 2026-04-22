@@ -14,9 +14,9 @@ import { ensureDirs } from "./utils/filesystem.js";
 const program = new Command();
 
 program
-  .name("ua")
+  .name("agent")
   .description("UseAgents - Local agent package runner")
-  .version("0.1.0")
+  .version("0.1.3")
   .option("--debug", "Show stack traces on errors");
 
 program.hook("preAction", async () => {

@@ -2,14 +2,14 @@
 
 > Local agent package runner for AI agents
 
-UseAgents (`ua`) is a CLI tool that lets you install, manage, and run AI agents locally — similar to how Homebrew manages packages, but for autonomous agents.
+UseAgents (`agent`) is a CLI tool that lets you install, manage, and run AI agents locally — like a package manager, but for autonomous agents.
 
 ## Why UseAgents?
 
 Most AI agent platforms require cloud infrastructure or complex setup. UseAgents brings the simplicity of package managers to AI agents:
 
-- **Install agents like packages**: `ua install github:org/agent`
-- **Run them locally**: `ua run my-agent --input '{"task": "write code"}'`
+- **Install agents like packages**: `agent install github:org/agent`
+- **Run them locally**: `agent run my-agent --input '{"task": "write code"}'`
 - **Version management**: Multiple versions installed, one active
 - **Permission enforcement**: Agents declare what they need, you control access
 - **Secret management**: Store API keys securely, inject only when needed
@@ -26,29 +26,29 @@ npm install -g @thesethrose/useagents
 
 ```bash
 # From a local folder
-ua install ./examples/hello-world
+agent install ./examples/hello-world
 
 # From GitHub (shorthand)
-ua install github:your-org/hello-world
+agent install github:your-org/hello-world
 
 # From any git URL
-ua install https://github.com/your-org/hello-world
+agent install https://github.com/your-org/hello-world
 ```
 
 ### Run an Agent
 
 ```bash
-ua run hello-world --input '{"name": "Developer"}'
+agent run hello-world --input '{"name": "Developer"}'
 ```
 
 ### Manage Agents
 
 ```bash
-ua list                    # List installed agents
-ua info hello-world        # Show agent details
-ua update hello-world      # Update to latest version
-ua remove hello-world      # Uninstall an agent
-ua logs hello-world        # View execution history
+agent list                    # List installed agents
+agent info hello-world        # Show agent details
+agent update hello-world      # Update to latest version
+agent remove hello-world      # Uninstall an agent
+agent logs hello-world        # View execution history
 ```
 
 ## Writing an Agent
@@ -152,16 +152,16 @@ tools:                            # available tools
 
 | Command | Description |
 |---------|-------------|
-| `ua install <source>` | Install from local path or git repo |
-| `ua run <agent> [-i <json>]` | Execute an agent |
-| `ua info <agent>` | Show agent metadata |
-| `ua list` | List installed agents |
-| `ua update <agent>` | Update to latest version |
-| `ua remove <agent>` | Uninstall an agent |
-| `ua logs <agent>` | View execution history |
-| `ua validate <path>` | Validate agent.yaml |
-| `ua secret set <key>` | Store a secret |
-| `ua secret list` | List stored secrets |
+| `agent install <source>` | Install from local path or git repo |
+| `agent run <agent> [-i <json>]` | Execute an agent |
+| `agent info <agent>` | Show agent metadata |
+| `agent list` | List installed agents |
+| `agent update <agent>` | Update to latest version |
+| `agent remove <agent>` | Uninstall an agent |
+| `agent logs <agent>` | View execution history |
+| `agent validate <path>` | Validate agent.yaml |
+| `agent secret set <key>` | Store a secret |
+| `agent secret list` | List stored secrets |
 
 ## Development
 
@@ -198,7 +198,7 @@ See [CHANGELOG.md](CHANGELOG.md) for planned features.
 
 Highlights:
 - **v0.2.0**: Sandboxed runtime (Deno/QuickJS), permission prompts
-- **v0.3.0**: Web registry, `ua search`, semver resolution
+- **v0.3.0**: Web registry, `agent search`, semver resolution
 - **v0.4.0**: Python runtime, Docker isolation, background execution
 - **v0.5.0**: VS Code extension
 - **v1.0.0**: Stable API, comprehensive tests, official docs
