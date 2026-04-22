@@ -1,13 +1,16 @@
 import { pathExists, getAgentActivePath, getAgentRuntimeDir, removeDir, readJson, writeJson, INSTALLS_FILE } from "../utils/filesystem.js";
 import { UseAgentsError } from "../utils/errors.js";
-import { isManagedIntegration } from "../registry.js";
-import { removeIntegrationRecord } from "../utils/integrations.js";
+import { resolveInRegistry, isManagedIntegration } from "../registry.js";
+import { loadManagedIntegration, removeIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
 import type { InstallRecord } from "../types.js";
 
-export async function removeCommand(agentName: string): Promise<void> {
+export async function uninstallCommand(agentName: string): Promise<void> {
   if (isManagedIntegration(agentName)) {
+    const entry = resolveInRegistry(agentName)!;
+    const integration = await loadManagedIntegration(entry.path);
+    const result = await integration.uninstall();
     await removeIntegrationRecord(agentName);
-    console.log(`Removed ${agentName} from UseAgents (upstream installation left intact).`);
+    formatIntegrationResult(result);
     return;
   }
 
@@ -32,5 +35,5 @@ export async function removeCommand(agentName: string): Promise<void> {
   const filtered = installs.filter((i) => i.name !== agentName);
   await writeJson(INSTALLS_FILE, filtered);
 
-  console.log(`Removed ${agentName}`);
+  console.log(`Uninstalled ${agentName}`);
 }

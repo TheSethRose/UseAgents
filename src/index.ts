@@ -7,6 +7,7 @@ import { infoCommand } from "./commands/info.js";
 import { listCommand } from "./commands/list.js";
 import { updateCommand } from "./commands/update.js";
 import { removeCommand } from "./commands/remove.js";
+import { uninstallCommand } from "./commands/uninstall.js";
 import { logsCommand } from "./commands/logs.js";
 import { validateCommand } from "./commands/validate.js";
 import { secretCommand } from "./commands/secret.js";
@@ -56,8 +57,13 @@ program
 
 program
   .command("remove <agent-name>")
-  .description("Remove an installed agent")
+  .description("Remove an installed agent from UseAgents")
   .action(removeCommand);
+
+program
+  .command("uninstall <agent-name>")
+  .description("Uninstall the upstream software and remove from UseAgents")
+  .action(uninstallCommand);
 
 program
   .command("logs <agent-name>")
