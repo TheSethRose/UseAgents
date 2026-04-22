@@ -1,1 +1,212 @@
 # UseAgents
+
+> Local agent package runner for AI agents
+
+UseAgents (`ua`) is a CLI tool that lets you install, manage, and run AI agents locally — similar to how Homebrew manages packages, but for autonomous agents.
+
+## Why UseAgents?
+
+Most AI agent platforms require cloud infrastructure or complex setup. UseAgents brings the simplicity of package managers to AI agents:
+
+- **Install agents like packages**: `ua install github:org/agent`
+- **Run them locally**: `ua run my-agent --input '{"task": "write code"}'`
+- **Version management**: Multiple versions installed, one active
+- **Permission enforcement**: Agents declare what they need, you control access
+- **Secret management**: Store API keys securely, inject only when needed
+
+## Quick Start
+
+### Installation
+
+```bash
+npm install -g useagents
+```
+
+### Install an Agent
+
+```bash
+# From a local folder
+ua install ./examples/hello-world
+
+# From GitHub (shorthand)
+ua install github:your-org/hello-world
+
+# From any git URL
+ua install https://github.com/your-org/hello-world
+```
+
+### Run an Agent
+
+```bash
+ua run hello-world --input '{"name": "Developer"}'
+```
+
+### Manage Agents
+
+```bash
+ua list                    # List installed agents
+ua info hello-world        # Show agent details
+ua update hello-world      # Update to latest version
+ua remove hello-world      # Uninstall an agent
+ua logs hello-world        # View execution history
+```
+
+## Writing an Agent
+
+Agents are just folders with an `agent.yaml` manifest and an entrypoint.
+
+### Minimal Agent
+
+```yaml
+# agent.yaml
+name: hello-world
+version: 1.0.0
+description: A simple hello world agent
+runtime:
+  type: javascript
+  entrypoint: ./dist/index.js
+permissions:
+  network: false
+  filesystem:
+    read: []
+    write: []
+  secrets: []
+tools:
+  - echo.text
+```
+
+```javascript
+// dist/index.js
+export async function run(input, ctx) {
+  const name = input?.name || "World";
+  const echo = await ctx.tools["echo.text"]({ text: `Hello, ${name}!` });
+  return { message: echo.text };
+}
+```
+
+### Agent Context
+
+When an agent runs, it receives a context object (`ctx`) with:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ctx.agent` | `{ name, version, installPath }` | Agent metadata |
+| `ctx.model.generate()` | `async ({ prompt, system, temperature, responseFormat })` | Call LLM (if configured) |
+| `ctx.tools` | `Record<string, Function>` | Permissioned tools |
+| `ctx.secrets.get(key)` | `(key: string) => string \| undefined` | Access secrets |
+| `ctx.logger.info()` | `(msg: string, data?) => void` | Structured logging |
+
+### Manifest Reference
+
+```yaml
+name: my-agent                    # kebab-case identifier
+version: 1.0.0                    # semver
+
+description: "What this agent does"
+
+runtime:
+  type: javascript                # runtime type (currently: javascript)
+  entrypoint: ./dist/index.js     # entry file
+
+model:                            # optional LLM config
+  provider: openrouter            # model provider
+  model: anthropic/claude-3.7-sonnet
+
+permissions:                      # what the agent needs
+  network: false                  # internet access?
+  filesystem:
+    read: ["./data"]              # paths allowed for reading
+    write: ["./output"]           # paths allowed for writing
+  secrets:
+    - OPENROUTER_API_KEY          # required secrets
+
+tools:                            # available tools
+  - echo.text                     # echo input back
+  - http.fetch                    # make HTTP requests
+  - fs.readText                   # read files
+  - fs.writeText                  # write files
+```
+
+## Architecture
+
+```
+~/.useagents/
+├── runtimes/          # Versioned agent installs
+│   └── hello-world/
+│       └── 1.0.0/
+│           ├── agent.yaml
+│           └── dist/
+│               └── index.js
+├── active/            # Symlinks to active versions
+│   └── hello-world -> ../runtimes/hello-world/1.0.0
+├── state/
+│   ├── installs.json  # Install registry
+│   ├── logs.jsonl     # Execution history
+│   └── permissions.json
+├── secrets/
+│   └── secrets.json   # Encrypted secrets (0600 perms)
+└── cache/             # Git clone cache
+```
+
+## CLI Reference
+
+| Command | Description |
+|---------|-------------|
+| `ua install <source>` | Install from local path or git repo |
+| `ua run <agent> [-i <json>]` | Execute an agent |
+| `ua info <agent>` | Show agent metadata |
+| `ua list` | List installed agents |
+| `ua update <agent>` | Update to latest version |
+| `ua remove <agent>` | Uninstall an agent |
+| `ua logs <agent>` | View execution history |
+| `ua validate <path>` | Validate agent.yaml |
+| `ua secret set <key>` | Store a secret |
+| `ua secret list` | List stored secrets |
+
+## Development
+
+```bash
+# Clone the repo
+git clone https://github.com/your-org/useagents.git
+cd useagents
+
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run locally
+node dist/index.js --help
+
+# Test with example agent
+node dist/index.js install ./examples/hello-world
+node dist/index.js run hello-world
+```
+
+## Security Model
+
+1. **Manifest declarations**: Agents must declare all permissions in `agent.yaml`
+2. **Secret isolation**: Secrets are stored separately, injected only when declared
+3. **Filesystem sandboxing**: Agents can only access declared paths
+4. **Network control**: Internet access is opt-in per agent
+5. **Audit logging**: All executions logged to `~/.useagents/state/logs.jsonl`
+
+## Roadmap
+
+See [CHANGELOG.md](CHANGELOG.md) for planned features.
+
+Highlights:
+- **v0.2.0**: Sandboxed runtime (Deno/QuickJS), permission prompts
+- **v0.3.0**: Web registry, `ua search`, semver resolution
+- **v0.4.0**: Python runtime, Docker isolation, background execution
+- **v0.5.0**: VS Code extension
+- **v1.0.0**: Stable API, comprehensive tests, official docs
+
+## Contributing
+
+Contributions welcome! Please read our [Contributing Guide](CONTRIBUTING.md) first.
+
+## License
+
+MIT

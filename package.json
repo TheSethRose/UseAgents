@@ -1,0 +1,33 @@
+{
+  "name": "useagents",
+  "version": "0.1.0",
+  "description": "Local agent package runner for AI agents",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "ua": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --out-dir dist --clean",
+    "dev": "tsup src/index.ts --format esm --out-dir dist --watch",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["ai", "agents", "cli", "local", "runner"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "yaml": "^2.4.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
