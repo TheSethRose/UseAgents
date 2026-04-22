@@ -1,8 +1,14 @@
 import { pathExists, getAgentActivePath, getAgentRuntimeDir, removeDir, readJson, writeJson, INSTALLS_FILE } from "../utils/filesystem.js";
 import { UseAgentsError } from "../utils/errors.js";
 import type { InstallRecord } from "../types.js";
+import { isManagedOpenClaw, removeOpenClawIntegration } from "../integrations/openclaw.js";
 
-export async function removeCommand(agentName: string): Promise<void> {
+export async function removeCommand(agentName: string, options: { uninstallUpstream?: boolean } = {}): Promise<void> {
+  if (isManagedOpenClaw(agentName)) {
+    await removeOpenClawIntegration({ uninstallUpstream: options.uninstallUpstream });
+    return;
+  }
+
   const activePath = getAgentActivePath(agentName);
   
   if (!await pathExists(activePath)) {

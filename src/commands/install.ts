@@ -3,6 +3,7 @@ import { execSync } from "node:child_process";
 import { cwd } from "node:process";
 import { loadManifest } from "../utils/manifest.js";
 import { UseAgentsError } from "../utils/errors.js";
+import { installOpenClawIntegration, isManagedOpenClaw } from "../integrations/openclaw.js";
 import {
   copyDir,
   removeDir,
@@ -79,6 +80,11 @@ export async function resolveLocalSourcePath(source: string): Promise<string> {
 }
 
 export async function installCommand(source: string): Promise<void> {
+  if (isManagedOpenClaw(source)) {
+    await installOpenClawIntegration();
+    return;
+  }
+
   const isLocal = !source.startsWith("github:") && !source.startsWith("https://") && !source.startsWith("git@");
   let sourcePath: string;
   let resolvedSource = source;

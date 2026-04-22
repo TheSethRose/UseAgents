@@ -102,6 +102,27 @@ export interface InstallRecord {
   active: boolean;
 }
 
+export interface ManagedIntegrationUpstreamState {
+  installed: boolean;
+  version: string | null;
+  binaryPath: string | null;
+  installMethod: string;
+  lastCheckedAt: string;
+}
+
+export interface ManagedIntegrationRecord {
+  name: string;
+  kind: "managed-external";
+  wrapperVersion: string;
+  installedAt: string;
+  updatedAt: string;
+  upstream: ManagedIntegrationUpstreamState;
+}
+
+export interface IntegrationsState {
+  integrations: Record<string, ManagedIntegrationRecord>;
+}
+
 export interface LogEntry {
   timestamp: string;
   agentName: string;

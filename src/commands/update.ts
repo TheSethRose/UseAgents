@@ -2,8 +2,14 @@ import { pathExists, getAgentActivePath, readJson, INSTALLS_FILE } from "../util
 import { UseAgentsError } from "../utils/errors.js";
 import { installCommand } from "./install.js";
 import type { InstallRecord } from "../types.js";
+import { isManagedOpenClaw, updateOpenClawIntegration } from "../integrations/openclaw.js";
 
 export async function updateCommand(agentName: string): Promise<void> {
+  if (isManagedOpenClaw(agentName)) {
+    await updateOpenClawIntegration();
+    return;
+  }
+
   const activePath = getAgentActivePath(agentName);
   
   if (!await pathExists(activePath)) {

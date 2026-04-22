@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import packageJson from "../package.json";
 import { installCommand } from "./commands/install.js";
 import { runCommand } from "./commands/run.js";
 import { infoCommand } from "./commands/info.js";
@@ -16,7 +17,7 @@ const program = new Command();
 program
   .name("agent")
   .description("UseAgents - Local agent package runner")
-  .version("0.1.3")
+  .version(packageJson.version)
   .option("--debug", "Show stack traces on errors");
 
 program.hook("preAction", async () => {
@@ -53,7 +54,13 @@ program
 program
   .command("remove <agent-name>")
   .description("Remove an installed agent")
+  .option("--uninstall-upstream", "For managed external integrations, uninstall the upstream software too")
   .action(removeCommand);
+
+program
+  .command("uninstall <agent-name>")
+  .description("Uninstall a managed external integration and its upstream software")
+  .action((agentName: string) => removeCommand(agentName, { uninstallUpstream: true }));
 
 program
   .command("logs <agent-name>")

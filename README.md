@@ -28,6 +28,9 @@ npm install -g @thesethrose/useagents
 # From a local folder
 agent install ./examples/hello-world
 
+# Built-in managed integration
+agent install openclaw
+
 # From GitHub (shorthand)
 agent install github:your-org/hello-world
 
@@ -41,16 +44,19 @@ agent install https://github.com/your-org/hello-world
 agent run hello-world --input '{"name": "Developer"}'
 ```
 
-### Try the OpenClaw Example
+### Manage OpenClaw
 
 ```bash
 agent install openclaw
-agent run openclaw
+agent info openclaw
+agent run openclaw --input '{"action":"status"}'
+agent update openclaw
+agent remove openclaw
+# or remove wrapper + upstream package:
+agent uninstall openclaw
 ```
 
-This example installs OpenClaw through UseAgents: it checks whether `openclaw` is already installed and, if not, can guide or initiate the documented OpenClaw installer before handing you off to `openclaw onboard --install-daemon`.
-
-It is intentionally **not** a new manifest capability for arbitrary remote software installs during `agent install`; it is a self-contained OpenClaw example package that handles the documented install and onboarding handoff.
+OpenClaw is a built-in managed external integration. UseAgents tracks wrapper state separately from the upstream OpenClaw binary, installs upstream OpenClaw through the official installer, updates with the official update flow, and can optionally uninstall upstream OpenClaw too.
 
 ### Run in Sandbox Mode
 
@@ -70,7 +76,8 @@ Sandbox mode runs agents in an isolated Docker container with:
 agent list                    # List installed agents
 agent info hello-world        # Show agent details
 agent update hello-world      # Update to latest version
-agent remove hello-world      # Uninstall an agent
+agent remove hello-world      # Remove an agent
+agent uninstall openclaw      # Uninstall upstream OpenClaw too
 agent logs hello-world        # View execution history
 ```
 
@@ -189,7 +196,8 @@ tools:                            # available tools
 | `agent info <agent>` | Show agent metadata |
 | `agent list` | List installed agents |
 | `agent update <agent>` | Update to latest version |
-| `agent remove <agent>` | Uninstall an agent |
+| `agent remove <agent>` | Remove an agent or wrapper state |
+| `agent uninstall <agent>` | Uninstall a managed external integration and its upstream software |
 | `agent logs <agent>` | View execution history |
 | `agent validate <path>` | Validate agent.yaml |
 | `agent secret set <key>` | Store a secret |
@@ -215,9 +223,10 @@ node dist/index.js --help
 node dist/index.js install ./examples/hello-world
 node dist/index.js run hello-world
 
-# Try the OpenClaw example
+# Manage the built-in OpenClaw integration
 node dist/index.js install openclaw
-node dist/index.js run openclaw
+node dist/index.js info openclaw
+node dist/index.js run openclaw --input '{"action":"status"}'
 ```
 
 ## Security Model
