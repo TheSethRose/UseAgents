@@ -99,10 +99,10 @@ When an agent runs, it receives a context object (`ctx`) with:
 ### Manifest Reference
 
 ```yaml
-name: my-agent                    # kebab-case identifier
+name: hello-world                 # kebab-case identifier
 version: 1.0.0                    # semver
 
-description: "What this agent does"
+description: "A simple hello world agent"
 
 runtime:
   type: javascript                # runtime type (currently: javascript)
@@ -115,8 +115,8 @@ model:                            # optional LLM config
 permissions:                      # what the agent needs
   network: false                  # internet access?
   filesystem:
-    read: ["./data"]              # paths allowed for reading
-    write: ["./output"]           # paths allowed for writing
+    read: []                      # paths allowed for reading
+    write: []                     # paths allowed for writing
   secrets:
     - OPENROUTER_API_KEY          # required secrets
 
