@@ -1,6 +1,6 @@
 {
   "name": "@thesethrose/useagents",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Local agent package runner for AI agents",
   "type": "module",
   "main": "dist/index.js",
