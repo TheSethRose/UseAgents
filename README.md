@@ -58,6 +58,8 @@ agent uninstall openclaw
 
 OpenClaw is a built-in managed external integration. UseAgents tracks wrapper state separately from the upstream OpenClaw binary, installs upstream OpenClaw through the official installer, updates with the official update flow, and can optionally uninstall upstream OpenClaw too.
 
+UseAgents never exposes or owns an `openclaw` executable. `agent ...` manages the wrapper; plain `openclaw ...` remains the upstream OpenClaw CLI.
+
 ### Run in Sandbox Mode
 
 ```bash

@@ -11,8 +11,11 @@ import { logsCommand } from "./commands/logs.js";
 import { validateCommand } from "./commands/validate.js";
 import { secretCommand } from "./commands/secret.js";
 import { ensureDirs } from "./utils/filesystem.js";
+import { assertSafeCliInvocation } from "./utils/cli.js";
 
 const program = new Command();
+
+assertSafeCliInvocation(process.argv[1], Object.keys(packageJson.bin ?? {}));
 
 program
   .name("agent")
