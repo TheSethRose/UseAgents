@@ -102,27 +102,6 @@ export interface InstallRecord {
   active: boolean;
 }
 
-export interface ManagedIntegrationUpstreamState {
-  installed: boolean;
-  version: string | null;
-  binaryPath: string | null;
-  installMethod: string;
-  lastCheckedAt: string;
-}
-
-export interface ManagedIntegrationRecord {
-  name: string;
-  kind: "managed-external";
-  wrapperVersion: string;
-  installedAt: string;
-  updatedAt: string;
-  upstream: ManagedIntegrationUpstreamState;
-}
-
-export interface IntegrationsState {
-  integrations: Record<string, ManagedIntegrationRecord>;
-}
-
 export interface LogEntry {
   timestamp: string;
   agentName: string;
@@ -160,4 +139,55 @@ export interface CliError {
   error: string;
   type: string;
   details?: Record<string, unknown>;
+}
+
+export type ManagedIntegrationKind = "managed-external";
+
+export type IntegrationAction =
+  | "status"
+  | "install"
+  | "update"
+  | "onboard"
+  | "dashboard"
+  | "uninstall";
+
+export interface ManagedIntegrationRecord {
+  name: string;
+  kind: ManagedIntegrationKind;
+  wrapperVersion: string;
+  installedAt?: string;
+  updatedAt?: string;
+  upstream: {
+    installed: boolean;
+    version?: string;
+    binaryPath?: string;
+    installMethod?: string;
+    lastCheckedAt?: string;
+  };
+}
+
+export interface IntegrationStore {
+  integrations: Record<string, ManagedIntegrationRecord>;
+}
+
+export interface IntegrationActionResult {
+  status: string;
+  summary: string;
+  version?: string;
+  previousVersion?: string;
+  binaryPath?: string;
+  commands?: string[];
+  nextSteps?: string[];
+  details?: Record<string, unknown>;
+}
+
+export interface ManagedIntegration {
+  name: string;
+  kind: ManagedIntegrationKind;
+  wrapperVersion: string;
+  install(options?: { force?: boolean }): Promise<IntegrationActionResult>;
+  update(options?: { force?: boolean }): Promise<IntegrationActionResult>;
+  uninstall(): Promise<IntegrationActionResult>;
+  info(): Promise<IntegrationActionResult>;
+  runAction(action: IntegrationAction): Promise<IntegrationActionResult>;
 }

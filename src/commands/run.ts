@@ -8,7 +8,6 @@ import { loadSecrets } from "./secret.js";
 import { Logger } from "../utils/logger.js";
 import { loadPermissionsStore, hasGrantedPermissions, promptPermissionGrant } from "../utils/permissions.js";
 import { isDockerAvailable, runInSandbox } from "../utils/sandbox.js";
-import { isManagedOpenClaw, runOpenClawIntegrationAction } from "../integrations/openclaw.js";
 
 export async function runCommand(agentName: string, options: { input?: string; sandbox?: boolean }): Promise<void> {
   let input: unknown;
@@ -18,12 +17,6 @@ export async function runCommand(agentName: string, options: { input?: string; s
     } catch {
       throw new UseAgentsError("Invalid JSON input", "invalid_input", { input: options.input });
     }
-  }
-
-  if (isManagedOpenClaw(agentName)) {
-    const result = await runOpenClawIntegrationAction(input);
-    console.log(JSON.stringify(result, null, 2));
-    return;
   }
 
   const activePath = getAgentActivePath(agentName);

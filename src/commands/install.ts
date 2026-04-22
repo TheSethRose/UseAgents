@@ -3,7 +3,6 @@ import { execSync } from "node:child_process";
 import { cwd } from "node:process";
 import { loadManifest } from "../utils/manifest.js";
 import { UseAgentsError } from "../utils/errors.js";
-import { installOpenClawIntegration, isManagedOpenClaw } from "../integrations/openclaw.js";
 import {
   copyDir,
   removeDir,
@@ -15,6 +14,8 @@ import {
   INSTALLS_FILE,
   CACHE_DIR,
 } from "../utils/filesystem.js";
+import { resolveInRegistry } from "../registry.js";
+import { loadManagedIntegration, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
 import type { InstallRecord } from "../types.js";
 
 async function ensureEsmPackageJson(runtimeDir: string): Promise<void> {
@@ -80,16 +81,37 @@ export async function resolveLocalSourcePath(source: string): Promise<string> {
 }
 
 export async function installCommand(source: string): Promise<void> {
-  if (isManagedOpenClaw(source)) {
-    await installOpenClawIntegration();
+  const registryEntry = resolveInRegistry(source);
+
+  if (registryEntry?.type === "managed-integration") {
+    const integration = await loadManagedIntegration(registryEntry.path);
+    const result = await integration.install({});
+    await upsertIntegrationRecord({
+      name: integration.name,
+      kind: "managed-external",
+      wrapperVersion: integration.wrapperVersion,
+      installedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      upstream: {
+        installed: result.status.endsWith("_installed") || result.status.endsWith("_updated"),
+        version: result.version,
+        binaryPath: result.binaryPath,
+        installMethod: "official-installer",
+        lastCheckedAt: new Date().toISOString(),
+      },
+    });
+    formatIntegrationResult(result);
     return;
   }
 
   const isLocal = !source.startsWith("github:") && !source.startsWith("https://") && !source.startsWith("git@");
   let sourcePath: string;
   let resolvedSource = source;
-  
-  if (isLocal) {
+
+  if (registryEntry?.type === "packaged-agent") {
+    sourcePath = registryEntry.path;
+    resolvedSource = sourcePath;
+  } else if (isLocal) {
     sourcePath = await resolveLocalSourcePath(source);
     resolvedSource = sourcePath;
   } else {

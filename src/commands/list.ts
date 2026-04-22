@@ -1,31 +1,33 @@
 import { readdir } from "node:fs/promises";
-import { ACTIVE_DIR, INTEGRATIONS_FILE, pathExists, readJson } from "../utils/filesystem.js";
-import type { IntegrationsState } from "../types.js";
+import { ACTIVE_DIR, pathExists } from "../utils/filesystem.js";
+import { loadIntegrationStore } from "../utils/integrations.js";
 
 export async function listCommand(): Promise<void> {
   const activeEntries = await pathExists(ACTIVE_DIR) ? await readdir(ACTIVE_DIR) : [];
-  const integrations = (await readJson<IntegrationsState>(INTEGRATIONS_FILE))?.integrations ?? {};
-  const integrationEntries = Object.values(integrations);
+  const store = await loadIntegrationStore();
+  const integrationNames = Object.keys(store.integrations);
 
-  if (activeEntries.length === 0 && integrationEntries.length === 0) {
-    console.log("No agents installed.");
+  if (activeEntries.length === 0 && integrationNames.length === 0) {
+    console.log("No agents or integrations installed.");
     return;
   }
 
   if (activeEntries.length > 0) {
     console.log("Installed agents:");
-  }
-  for (const name of activeEntries) {
-    console.log(`  ${name}`);
+    for (const name of activeEntries) {
+      console.log(`  ${name}`);
+    }
   }
 
-  if (integrationEntries.length > 0) {
+  if (integrationNames.length > 0) {
+    if (activeEntries.length > 0) {
+      console.log("");
+    }
     console.log("Managed integrations:");
-  }
-  for (const integration of integrationEntries) {
-    const upstream = integration.upstream.installed
-      ? integration.upstream.version ?? "installed"
-      : "not installed";
-    console.log(`  ${integration.name} (${integration.kind}, upstream: ${upstream})`);
+    for (const name of integrationNames) {
+      const record = store.integrations[name];
+      const status = record.upstream.installed ? ` (${record.upstream.version ?? "unknown"})` : " (not installed)";
+      console.log(`  ${name}${status}`);
+    }
   }
 }

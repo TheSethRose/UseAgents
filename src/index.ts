@@ -57,13 +57,7 @@ program
 program
   .command("remove <agent-name>")
   .description("Remove an installed agent")
-  .option("--uninstall-upstream", "For managed external integrations, uninstall the upstream software too")
   .action(removeCommand);
-
-program
-  .command("uninstall <agent-name>")
-  .description("Uninstall a managed external integration and its upstream software")
-  .action((agentName: string) => removeCommand(agentName, { uninstallUpstream: true }));
 
 program
   .command("logs <agent-name>")
