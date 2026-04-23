@@ -220,7 +220,7 @@ node dist/index.js run hello-world
 See [CHANGELOG.md](CHANGELOG.md) for planned features.
 
 Highlights:
-- **v0.2.0**: Sandboxed runtime (Deno/QuickJS), permission prompts
+- **v0.2.0**: Permission prompts, audit logging, network allowlisting, Docker-based sandboxed runtime
 - **v0.3.0**: Web registry, `agent search`, semver resolution
 - **v0.4.0**: Python runtime, Docker isolation, background execution
 - **v0.5.0**: VS Code extension
