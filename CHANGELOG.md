@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.4] - 2026-04-22
+## [0.3.0] - 2026-04-23
 
 ### Added
+- `useagents.io` web registry deployed at `https://registry.useagents.io`
+- `agent search <query>` command to search the remote registry
+- CLI points to `registry.useagents.io/v1` by default (override with `USEAGENTS_REGISTRY` env var)
 - Managed integration examples for `goclaw`, `picoclaw`, `pi-mono`, `claude-code`, `gemini-cli`, `qwen-cli`, and `nanoclaw`
 - Interim registry entries for the new managed integrations so they can be installed and tested locally
+
+### Infrastructure
+- Registry API deployed via Coolify on Hetzner-prod-srdev-ash-02
+- Private GitHub repo (`TheSethRose/useagents-registry`) with SSH deploy key authentication
+
+## [0.2.4] - 2026-04-22
 
 ### Added
 - Permission prompt on first run (grant/deny with remembered choice in `~/.useagents/state/permissions.json`)
@@ -28,18 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Roadmap]
 
-### 0.3.0 - Registry & Distribution
-- [ ] `useagents.io` web registry
-- [ ] `agent search <query>` command
-- [ ] Semantic version resolution (`^`, `~`)
-- [ ] Agent dependency management
-
 ### 0.4.0 - Multi-Runtime & Isolation
 - [ ] Python runtime support (first non-JavaScript runtime)
 - [ ] Rust runtime support
 - [ ] Runtime-agnostic Docker isolation (extending v0.2.0 sandbox to all languages)
 - [ ] Streaming output from agents
 - [ ] Background agent execution (`agent run --detach`)
+- [ ] Semantic version resolution (`^`, `~`)
+- [ ] Agent dependency management
 
 ### 0.5.0 - IDE Integration
 - [ ] VS Code extension for agent development
