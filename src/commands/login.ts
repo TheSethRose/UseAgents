@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { AUTH_FILE, writeJson } from "../utils/filesystem.js";
 import { getRegistryUrl } from "../registry.js";
 import { UseAgentsError } from "../utils/errors.js";
