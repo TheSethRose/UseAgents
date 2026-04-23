@@ -1,9 +1,10 @@
 import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 import { ACTIVE_DIR, pathExists } from "../utils/filesystem.js";
 import { loadIntegrationStore } from "../utils/integrations.js";
 
 export async function listCommand(agentName?: string): Promise<void> {
-  const activeEntries = await pathExists(ACTIVE_DIR) ? await readdir(ACTIVE_DIR) : [];
+  const activeEntries = await getInstalledAgentNames();
   const store = await loadIntegrationStore();
   const integrationNames = Object.keys(store.integrations);
 
@@ -42,4 +43,24 @@ export async function listCommand(agentName?: string): Promise<void> {
       console.log(`  ${name}${status}`);
     }
   }
+}
+
+async function getInstalledAgentNames(): Promise<string[]> {
+  if (!await pathExists(ACTIVE_DIR)) {
+    return [];
+  }
+
+  const entries = await readdir(ACTIVE_DIR);
+  const names: string[] = [];
+
+  for (const name of entries) {
+    if (name.startsWith(".")) {
+      continue;
+    }
+    if (await pathExists(join(ACTIVE_DIR, name))) {
+      names.push(name);
+    }
+  }
+
+  return names;
 }
