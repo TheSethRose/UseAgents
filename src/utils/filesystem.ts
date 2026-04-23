@@ -15,6 +15,7 @@ export const LOGS_FILE = join(STATE_DIR, "logs.jsonl");
 export const AUDIT_LOGS_FILE = join(STATE_DIR, "audit.jsonl");
 export const PERMISSIONS_FILE = join(STATE_DIR, "permissions.json");
 export const SECRETS_FILE = join(SECRETS_DIR, "secrets.json");
+export const AUTH_FILE = join(STATE_DIR, "auth.json");
 
 export async function ensureDirs(): Promise<void> {
   await mkdir(RUNTIMES_DIR, { recursive: true });

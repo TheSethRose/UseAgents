@@ -16,6 +16,8 @@ import { validateCommand } from "./commands/validate.js";
 import { secretCommand } from "./commands/secret.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { configCommand } from "./commands/config.js";
+import { loginCommand } from "./commands/login.js";
+import { logoutCommand } from "./commands/logout.js";
 import { ensureDirs } from "./utils/filesystem.js";
 import { assertSafeCliInvocation } from "./utils/cli.js";
 
@@ -106,6 +108,16 @@ program
   .command("doctor")
   .description("Check your system for potential problems")
   .action(doctorCommand);
+
+program
+  .command("login")
+  .description("Authenticate with the UseAgents registry")
+  .action(loginCommand);
+
+program
+  .command("logout")
+  .description("Remove registry authentication")
+  .action(logoutCommand);
 
 program
   .command("config")

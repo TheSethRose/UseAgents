@@ -1,3 +1,5 @@
+import { readJson, AUTH_FILE } from "./utils/filesystem.js";
+
 export const DEFAULT_REGISTRY_URL = "https://registry.useagents.io/v1";
 
 export function getRegistryUrl(): string {
@@ -27,4 +29,20 @@ export function isPackagedAgent(name: string): boolean {
 
 export function listRegistryEntries(): Array<{ name: string } & RegistryEntry> {
   return Object.entries(interimRegistry).map(([name, entry]) => ({ name, ...entry }));
+}
+
+export async function getAuthToken(): Promise<string | undefined> {
+  const auth = await readJson<{ registryToken?: string }>(AUTH_FILE);
+  return auth?.registryToken;
+}
+
+export async function createRegistryHeaders(): Promise<Record<string, string>> {
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
 }
