@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Next Up
+- [ ] Registry Backup/Restore — automated backups of `agents.json` and per-agent data with restore capability
+
 ## [0.3.0] - 2026-04-23
 
 ### Added

@@ -25,8 +25,8 @@ npm install -g @thesethrose/useagents
 ### Install an Agent
 
 ```bash
-# From a local folder
-agent install ./examples/hello-world
+# From the public registry
+agent install hello-world
 
 # From GitHub (shorthand)
 agent install github:your-org/hello-world
@@ -201,7 +201,7 @@ npm run build
 node dist/index.js --help
 
 # Test with example agent
-node dist/index.js install ./examples/hello-world
+node dist/index.js install hello-world
 node dist/index.js run hello-world
 ```
 

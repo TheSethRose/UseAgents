@@ -17,48 +17,7 @@ export interface RegistryEntry {
   type: RegistryEntryType;
 }
 
-export const interimRegistry: Record<string, RegistryEntry> = {
-  "goclaw": {
-    path: join(PROJECT_ROOT, "examples", "goclaw"),
-    type: "managed-integration",
-  },
-  "picoclaw": {
-    path: join(PROJECT_ROOT, "examples", "picoclaw"),
-    type: "managed-integration",
-  },
-  "pi-mono": {
-    path: join(PROJECT_ROOT, "examples", "pi-mono"),
-    type: "managed-integration",
-  },
-  "claude-code": {
-    path: join(PROJECT_ROOT, "examples", "claude-code"),
-    type: "managed-integration",
-  },
-  "gemini-cli": {
-    path: join(PROJECT_ROOT, "examples", "gemini-cli"),
-    type: "managed-integration",
-  },
-  "qwen-cli": {
-    path: join(PROJECT_ROOT, "examples", "qwen-cli"),
-    type: "managed-integration",
-  },
-  "nanoclaw": {
-    path: join(PROJECT_ROOT, "examples", "nanoclaw"),
-    type: "managed-integration",
-  },
-  "openclaw": {
-    path: join(PROJECT_ROOT, "examples", "openclaw"),
-    type: "managed-integration",
-  },
-  "hermes": {
-    path: join(PROJECT_ROOT, "examples", "hermes"),
-    type: "managed-integration",
-  },
-  "hello-world": {
-    path: join(PROJECT_ROOT, "examples", "hello-world"),
-    type: "packaged-agent",
-  },
-};
+export const interimRegistry: Record<string, RegistryEntry> = {};
 
 export function resolveInRegistry(name: string): RegistryEntry | undefined {
   return interimRegistry[name];

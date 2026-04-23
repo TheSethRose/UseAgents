@@ -11,7 +11,6 @@ UseAgents is a local-first TypeScript CLI for installing, managing, and running 
 - Command implementations: [`src/commands/`](./src/commands/)
 - Shared helpers: [`src/utils/`](./src/utils/)
 - Model and tool adapters: [`src/adapters/`](./src/adapters/)
-- Example agent shape: [`examples/hello-world/`](./examples/hello-world/)
 - Public-facing behavior and usage examples: [`README.md`](./README.md)
 - Release notes and roadmap: [`CHANGELOG.md`](./CHANGELOG.md)
 
@@ -35,7 +34,7 @@ Use the package scripts defined in [`package.json`](./package.json).
 - `src/types.ts` defines the Zod manifest schema, `AgentContext`, logging types, and install/log record shapes.
 - `src/adapters/` contains model and tool adapter logic.
 - `src/utils/` contains filesystem, manifest, logging, and error helpers used across commands.
-- `examples/hello-world/` is the reference example for manifest shape and minimal agent behavior.
+- Agents are installed from the public registry at `registry.useagents.io` or from git URLs.
 
 ## Conventions that matter
 
@@ -49,7 +48,7 @@ Use the package scripts defined in [`package.json`](./package.json).
 ## Practical agent guidance
 
 - Read the relevant command file before editing behavior; most features map cleanly to a single command module plus shared helpers.
-- Check example agents before changing manifest or runtime assumptions.
+- Check published agents via `agent search` before changing manifest or runtime assumptions.
 - For storage-path behavior, prefer centralized filesystem utilities rather than hardcoding paths in multiple places.
 - Keep changes small and composable; this CLI has clear module boundaries already.
 

@@ -1,6 +1,0 @@
-{
-  "type": "module",
-  "name": "pi-mono-integration",
-  "version": "1.0.0",
-  "description": "Managed integration wrapper for Pi's coding agent CLI"
-}
