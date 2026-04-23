@@ -37,9 +37,10 @@ describe("installed agent commands", () => {
 
       await listCommand();
 
-      expect(logs).toContain("  hermes");
-      expect(logs).not.toContain("  hello-world");
-      expect(logs).not.toContain("  .DS_Store");
+      const output = logs.join("\n");
+      expect(output).toContain("hermes");
+      expect(output).not.toContain("hello-world");
+      expect(output).not.toContain(".DS_Store");
     } finally {
       await rm(homeDir, { recursive: true, force: true });
     }

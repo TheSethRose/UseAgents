@@ -1,4 +1,5 @@
 import { getRegistryUrl } from "../registry.js";
+import { printKeyValues, printTable, section } from "../utils/cli.js";
 
 export async function getCommand(agentName: string): Promise<void> {
   const registryUrl = getRegistryUrl();
@@ -8,7 +9,7 @@ export async function getCommand(agentName: string): Promise<void> {
     const res = await fetch(url);
     if (!res.ok) {
       if (res.status === 404) {
-        console.log(`==> ${agentName}`);
+        section(agentName);
         console.log(`Not found in registry.`);
         return;
       }
@@ -22,27 +23,34 @@ export async function getCommand(agentName: string): Promise<void> {
       description: string;
       author: string;
       latest: string;
-      versions: Record<string, { publishedAt: string }>;
+      versions: Record<string, { publishedAt: string; tarballUrl?: string; wrapperUrl?: string }>;
     };
 
     const isManaged = data.type === "managed-integration";
 
-    console.log(`==> ${data.name}`);
+    section(data.name);
     console.log(`${data.description}`);
-    console.log(`https://useagents.io/agents/${data.name}`);
-    console.log(`Author: ${data.author}`);
+    console.log();
+    printKeyValues([
+      ["Type", isManaged ? "managed integration" : "direct agent"],
+      ["Author", data.author],
+      ["Latest", data.latest],
+      ["Registry", url],
+      ["Page", `https://useagents.io/agents/${data.name}`],
+    ]);
 
-    if (!isManaged) {
-      console.log(`Latest: ${data.latest}`);
-
-      const versionKeys = Object.keys(data.versions).sort();
-      if (versionKeys.length > 0) {
-        console.log(`\nInstalled versions:`);
-        for (const v of versionKeys) {
-          const published = data.versions[v].publishedAt?.split("T")[0] ?? "unknown";
-          console.log(`  ${v} (${published})`);
-        }
-      }
+    const versionRows = Object.keys(data.versions).sort().map((version) => ({
+      version,
+      published: data.versions[version].publishedAt?.split("T")[0] ?? "unknown",
+      artifact: data.versions[version].wrapperUrl ? "wrapper" : data.versions[version].tarballUrl ? "tarball" : "manifest",
+    }));
+    if (versionRows.length > 0) {
+      console.log("\n==> Versions");
+      printTable(versionRows, [
+        { header: "Version", value: (row) => row.version },
+        { header: "Published", value: (row) => row.published },
+        { header: "Artifact", value: (row) => row.artifact },
+      ]);
     }
   } catch {
     console.error("Registry unreachable.");

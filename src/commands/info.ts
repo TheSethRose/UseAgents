@@ -3,6 +3,7 @@ import { loadManifest } from "../utils/manifest.js";
 import { UseAgentsError } from "../utils/errors.js";
 import { isManagedIntegration } from "../registry.js";
 import { loadManagedIntegrationFromRegistry, formatIntegrationResult } from "../utils/integrations.js";
+import { printKeyValues, section } from "../utils/cli.js";
 import type { InstallRecord } from "../types.js";
 
 export async function infoCommand(agentName: string | string[], ...rest: unknown[]): Promise<void> {
@@ -34,24 +35,27 @@ export async function infoCommand(agentName: string | string[], ...rest: unknown
     const installs = await readJson<InstallRecord[]>(INSTALLS_FILE) || [];
     const install = installs.find((i) => i.name === name);
 
-    console.log(`Name: ${manifest.name}`);
-    console.log(`Version: ${manifest.version}`);
-    console.log(`Description: ${manifest.description}`);
-    console.log(`Runtime: ${manifest.runtime.type}`);
-    console.log(`Entrypoint: ${manifest.runtime.entrypoint}`);
+    section(manifest.name);
+    console.log(manifest.description);
+    console.log();
+    printKeyValues([
+      ["Type", "direct agent"],
+      ["Version", manifest.version],
+      ["Runtime", manifest.runtime.type],
+      ["Entrypoint", manifest.runtime.entrypoint],
+      ["Model", manifest.model ? `${manifest.model.provider}/${manifest.model.model}` : undefined],
+      ["Install path", activePath],
+      ["Source", install?.source],
+      ["Installed", install?.installedAt],
+    ]);
 
-    if (manifest.model) {
-      console.log(`Model: ${manifest.model.provider}/${manifest.model.model}`);
-    }
-
-    console.log(`Install path: ${activePath}`);
-    console.log(`Source: ${install?.source || "unknown"}`);
-    console.log(`Installed: ${install?.installedAt || "unknown"}`);
-    console.log(`\nPermissions:`);
-    console.log(`  Network: ${manifest.permissions.network ? "yes" : "no"}`);
-    console.log(`  Secrets: ${manifest.permissions.secrets.join(", ") || "none"}`);
-    console.log(`  Tools: ${manifest.tools.join(", ") || "none"}`);
-    console.log(`  Filesystem read: ${manifest.permissions.filesystem.read.join(", ") || "none"}`);
-    console.log(`  Filesystem write: ${manifest.permissions.filesystem.write.join(", ") || "none"}`);
+    console.log("\n==> Permissions");
+    printKeyValues([
+      ["Network", typeof manifest.permissions.network === "boolean" ? manifest.permissions.network : manifest.permissions.network.enabled],
+      ["Secrets", manifest.permissions.secrets],
+      ["Tools", manifest.tools],
+      ["Filesystem read", manifest.permissions.filesystem.read],
+      ["Filesystem write", manifest.permissions.filesystem.write],
+    ]);
   }
 }

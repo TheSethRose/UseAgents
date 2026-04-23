@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import type { ManagedIntegrationRecord, IntegrationStore, IntegrationActionResult, ManagedIntegration } from "../types.js";
 import { INTEGRATIONS_FILE, INTEGRATIONS_CACHE_DIR, readJson, writeJson, pathExists } from "./filesystem.js";
 import { fetchRegistryAgent, getRegistryUrl } from "../registry.js";
+import { printKeyValues, section } from "./cli.js";
 
 export async function loadIntegrationStore(): Promise<IntegrationStore> {
   const store = await readJson<IntegrationStore>(INTEGRATIONS_FILE);
@@ -68,11 +69,9 @@ export async function loadManagedIntegrationFromRegistry(name: string): Promise<
   const integrationCacheDir = join(INTEGRATIONS_CACHE_DIR, name, version);
   const wrapperPath = join(integrationCacheDir, "wrapper.mjs");
 
-  if (!await pathExists(wrapperPath)) {
-    await downloadWrapperJs(wrapperUrl, wrapperPath);
-  }
+  await downloadWrapperJs(wrapperUrl, wrapperPath);
 
-  const mod = await import(wrapperPath);
+  const mod = await import(`${wrapperPath}?t=${Date.now()}`);
   if (!mod.integration) {
     throw new Error(`Wrapper at ${wrapperPath} does not export 'integration'`);
   }
@@ -80,32 +79,41 @@ export async function loadManagedIntegrationFromRegistry(name: string): Promise<
 }
 
 export function formatIntegrationResult(result: IntegrationActionResult): void {
-  console.log(`${result.summary}`);
-  if (result.version) {
-    console.log(`Version: ${result.version}`);
+  const name = typeof result.details?.name === "string" ? result.details.name : "Managed integration";
+  section(name);
+  console.log(result.summary);
+
+  const rows = ([
+    ["Status", formatStatus(result.status)],
+    ["Version", result.version],
+    ["Previous", result.previousVersion],
+    ["Binary", result.binaryPath],
+  ] as Array<[string, unknown]>).filter(([, value]) => value !== undefined);
+
+  if (rows.length > 0) {
+    console.log();
+    printKeyValues(rows);
   }
-  if (result.previousVersion) {
-    console.log(`Previous version: ${result.previousVersion}`);
-  }
-  if (result.binaryPath) {
-    console.log(`Binary path: ${result.binaryPath}`);
-  }
+
   if (result.commands && result.commands.length > 0) {
-    console.log("Commands:");
+    console.log("\n==> Commands");
     for (const cmd of result.commands) {
       console.log(`  ${cmd}`);
     }
   }
   if (result.nextSteps && result.nextSteps.length > 0) {
-    console.log("Next steps:");
+    console.log("\n==> Next steps");
     for (const step of result.nextSteps) {
       console.log(`  ${step}`);
     }
   }
   if (result.details && Object.keys(result.details).length > 0) {
-    console.log("Details:");
-    for (const [key, value] of Object.entries(result.details)) {
-      console.log(`  ${key}: ${value}`);
-    }
+    console.log("\n==> Details");
+    printKeyValues(Object.entries(result.details));
   }
+}
+
+function formatStatus(status: string): string {
+  const parts = status.split("_");
+  return (parts.length > 1 ? parts.slice(1).join(" ") : status).replace(/-/g, " ");
 }

@@ -17,6 +17,7 @@ import {
 } from "../utils/filesystem.js";
 import { fetchRegistryAgent, getRegistryUrl } from "../registry.js";
 import { loadManagedIntegrationFromRegistry, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
+import { printKeyValues, section } from "../utils/cli.js";
 import type { InstallRecord, Manifest } from "../types.js";
 
 async function ensureEsmPackageJson(runtimeDir: string): Promise<void> {
@@ -82,7 +83,7 @@ export async function resolveLocalSourcePath(source: string): Promise<string> {
 }
 
 async function installManagedIntegration(name: string, options?: { force?: boolean }): Promise<void> {
-  console.log(`Installing ${name}...`);
+  section(`Installing ${name}`);
   const integration = await loadManagedIntegrationFromRegistry(name);
   const result = await integration.install({ force: options?.force });
   await upsertIntegrationRecord({
@@ -160,13 +161,23 @@ async function installAgentFromPath(
 
   await writeJson(INSTALLS_FILE, installs);
 
-  console.log(`Installed ${manifest.name}@${manifest.version}`);
-  console.log(`Permissions requested:`);
-  console.log(`  Network: ${manifest.permissions.network ? "yes" : "no"}`);
-  console.log(`  Secrets: ${manifest.permissions.secrets.join(", ") || "none"}`);
-  console.log(`  Tools: ${manifest.tools.join(", ") || "none"}`);
-  console.log(`  Filesystem read: ${manifest.permissions.filesystem.read.join(", ") || "none"}`);
-  console.log(`  Filesystem write: ${manifest.permissions.filesystem.write.join(", ") || "none"}`);
+  section(`Installed ${manifest.name}`);
+  printKeyValues([
+    ["Version", manifest.version],
+    ["Type", "direct agent"],
+    ["Source", resolvedSource],
+    ["Runtime", manifest.runtime.type],
+    ["Entrypoint", manifest.runtime.entrypoint],
+  ]);
+
+  console.log("\n==> Permissions");
+  printKeyValues([
+    ["Network", typeof manifest.permissions.network === "boolean" ? manifest.permissions.network : manifest.permissions.network.enabled],
+    ["Secrets", manifest.permissions.secrets],
+    ["Tools", manifest.tools],
+    ["Filesystem read", manifest.permissions.filesystem.read],
+    ["Filesystem write", manifest.permissions.filesystem.write],
+  ]);
 
   return manifest;
 }

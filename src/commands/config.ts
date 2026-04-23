@@ -1,13 +1,16 @@
 import { USEAGENTS_DIR, STATE_DIR, SECRETS_DIR, CACHE_DIR } from "../utils/filesystem.js";
 import { getRegistryUrl } from "../registry.js";
+import { printKeyValues, section } from "../utils/cli.js";
 
 export async function configCommand(): Promise<void> {
-  console.log("==> Configuration");
-  console.log(`USEAGENTS_HOME: ${USEAGENTS_DIR}`);
-  console.log(`USEAGENTS_CACHE: ${CACHE_DIR}`);
-  console.log(`USEAGENTS_STATE: ${STATE_DIR}`);
-  console.log(`USEAGENTS_SECRETS: ${SECRETS_DIR}`);
-  console.log(`Registry URL: ${getRegistryUrl()}`);
+  section("Configuration");
+  printKeyValues([
+    ["Home", USEAGENTS_DIR],
+    ["Cache", CACHE_DIR],
+    ["State", STATE_DIR],
+    ["Secrets", SECRETS_DIR],
+    ["Registry", getRegistryUrl()],
+  ]);
 
   const envVars = [
     "USEAGENTS_REGISTRY",
@@ -16,10 +19,5 @@ export async function configCommand(): Promise<void> {
   ];
 
   console.log("\n==> Environment");
-  for (const key of envVars) {
-    const value = process.env[key];
-    if (value) {
-      console.log(`${key}: ${value}`);
-    }
-  }
+  printKeyValues(envVars.map((key) => [key, process.env[key] ?? "unset"]));
 }
