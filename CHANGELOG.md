@@ -7,17 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Next Up
-- [ ] Registry Backup/Restore — automated backups of `agents.json` and per-agent data with restore capability
+### Changed
+- Documentation now reflects the current split between direct agents and managed integrations.
+- CLI docs now include the current command surface: `get`, `upgrade`, `uninstall`, `doctor`, `config`, `login`, and `logout`.
+- Registry docs now describe the live Registry API role instead of a local-only website.
+
+### Fixed
+- `agent search` output now uses a compact package-manager-style result layout instead of a wide table.
+
+### Known Gaps
+- Registry backup/restore for JSON registry data is not implemented yet.
+- `USEAGENTS_REGISTRY_CACHE_TTL` and `USEAGENTS_OFFLINE` are visible in `agent config` but are reserved for future behavior.
 
 ## [0.3.0] - 2026-04-23
 
 ### Added
-- `useagents.io` web registry deployed at `https://registry.useagents.io`
+- UseAgents registry API deployed at `https://registry.useagents.io/v1`
 - `agent search <query>` command to search the remote registry
 - CLI points to `registry.useagents.io/v1` by default (override with `USEAGENTS_REGISTRY` env var)
 - Managed integration examples for `goclaw`, `picoclaw`, `pi-mono`, `claude-code`, `gemini-cli`, `qwen-cli`, and `nanoclaw`
-- Interim registry entries for the new managed integrations so they can be installed and tested locally
+- Registry entries for managed integrations and the `hello-world` direct agent
 
 ### Infrastructure
 - Registry API deployed via Coolify on Hetzner-prod-srdev-ash-02
@@ -46,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Runtime-agnostic Docker isolation (extending v0.2.0 sandbox to all languages)
 - [ ] Streaming output from agents
 - [ ] Background agent execution (`agent run --detach`)
-- [ ] Semantic version resolution (`^`, `~`)
+- [ ] Full semantic version range resolution (`^`, `~`)
 - [ ] Agent dependency management
 
 ### 0.5.0 - IDE Integration

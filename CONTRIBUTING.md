@@ -1,45 +1,71 @@
-# Contributing to UseAgents
+# Contributing to UseAgents CLI
 
-Thank you for your interest in contributing to UseAgents! This document provides guidelines and instructions for contributing.
+This package contains the `agent` CLI published as `@thesethrose/useagents`.
 
 ## Getting Started
 
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/thesethrose/useagents.git`
-3. Install dependencies: `npm install`
-4. Build the project: `npm run build`
-5. Run tests: `npm test` (when available)
+```bash
+git clone https://github.com/thesethrose/useagents.git
+cd useagents/cli
+npm install
+npm run check
+npm run build
+```
+
+There is no root package script for the CLI. Run all CLI commands from `cli/`.
 
 ## Development Workflow
 
-1. Create a new branch for your feature or fix
-2. Make your changes
-3. Ensure TypeScript compiles: `npm run typecheck`
-4. Test your changes locally
-5. Submit a pull request
+1. Create a branch for the fix or feature.
+2. Read the command, helper, or adapter you are changing before editing.
+3. Keep direct agents and managed integrations separate:
+   - Direct agents install runnable code and have `agent.yaml` manifests.
+   - Managed integrations orchestrate third-party installers and are tracked in `integrations.json`.
+4. Update tests and docs when behavior changes.
+5. Run the smallest meaningful checks before opening a PR.
+
+## Verification
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run check
+npm run build
+```
+
+For manual smoke tests, build first and then use:
+
+```bash
+node dist/index.js --help
+node dist/index.js search hello
+```
+
+Do not use `tsx src/index.ts` for CLI smoke tests; the CLI intentionally rejects invocation names that are not declared binaries.
 
 ## Pull Request Guidelines
 
-- Provide a clear description of the changes
-- Reference any related issues
-- Ensure the code follows existing patterns
-- Update documentation if needed
-- Add tests for new features
+- Describe the user-facing behavior that changed.
+- Call out any changes to manifest shape, storage layout, registry contract, or install semantics.
+- Add or update tests for command behavior, registry contract drift, permission handling, and manifest validation.
+- Avoid new production dependencies unless they are required for correctness.
 
 ## Code Style
 
-- Use TypeScript for all new code
-- Follow existing code formatting and style
-- Use meaningful variable and function names
-- Add comments only when necessary for complex logic
+- Use TypeScript for new source and tests.
+- Follow existing command-per-file structure in `src/commands/`.
+- Prefer shared helpers in `src/utils/` over duplicated filesystem, registry, or formatting logic.
+- Add comments only when they explain non-obvious behavior.
 
 ## Reporting Issues
 
-When reporting issues, please include:
-- Description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment details (OS, Node version, etc.)
+Include:
+
+- The exact `agent` command run
+- Expected and actual output
+- OS, shell, Node.js version, and installed CLI version
+- Relevant `USEAGENTS_*` environment variables
+- Whether the issue involves a direct agent or a managed integration
 
 ## License
 
