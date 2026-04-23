@@ -8,14 +8,16 @@ export function getRegistryUrl(): string {
 
 export interface RegistryAgentVersion {
   manifestUrl: string;
-  tarballUrl: string;
+  tarballUrl?: string;
   wrapperUrl?: string;
   publishedAt: string;
 }
 
+export type RegistryAgentType = "direct-agent" | "managed-integration" | "packaged-agent";
+
 export interface RegistryAgent {
   name: string;
-  type: "packaged-agent" | "managed-integration";
+  type: RegistryAgentType;
   description: string;
   author: string;
   versions: Record<string, RegistryAgentVersion>;
@@ -40,9 +42,9 @@ export async function isManagedIntegration(name: string): Promise<boolean> {
   return agent?.type === "managed-integration";
 }
 
-export async function isPackagedAgent(name: string): Promise<boolean> {
+export async function isDirectAgent(name: string): Promise<boolean> {
   const agent = await fetchRegistryAgent(name);
-  return agent?.type === "packaged-agent";
+  return agent?.type === "direct-agent" || agent?.type === "packaged-agent";
 }
 
 export async function getAuthToken(): Promise<string | undefined> {

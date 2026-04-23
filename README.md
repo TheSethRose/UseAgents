@@ -22,10 +22,14 @@ Most AI agent platforms require cloud infrastructure or complex setup. UseAgents
 npm install -g @thesethrose/useagents
 ```
 
-### Install an Agent
+### Install an Agent or Agentic Tool
 
 ```bash
-# From the public registry
+# Managed integrations orchestrate third-party installer/setup flows
+agent install claude-code
+agent install openclaw
+
+# Direct agents install runnable agent code from the registry
 agent install hello-world
 
 # From GitHub (shorthand)
@@ -165,7 +169,7 @@ tools:                            # available tools
 │   ├── audit.jsonl     # File/network access audit log
 │   └── permissions.json # Granted permission records
 ├── secrets/
-│   └── secrets.json   # Encrypted secrets (0600 perms)
+│   └── secrets.json   # Local secrets file (0600 perms)
 └── cache/             # Git clone cache
 ```
 
@@ -173,7 +177,7 @@ tools:                            # available tools
 
 | Command | Description |
 |---------|-------------|
-| `agent install <source>` | Install from local path or git repo |
+| `agent install <source>` | Install a registry managed integration, registry direct agent, local path, or git repo |
 | `agent run <agent> [-i <json>] [--sandbox]` | Execute an agent |
 | `agent info <agent>` | Show agent metadata |
 | `agent list` | List installed agents |

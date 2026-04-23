@@ -57,6 +57,7 @@ export async function isDockerAvailable(): Promise<boolean> {
 
 export async function runInSandbox(
   agentPath: string,
+  entrypoint: string,
   input: unknown,
   timeoutMs = 30000
 ): Promise<unknown> {
@@ -112,7 +113,7 @@ main().catch((err) => {
       "-v", wrapperMount,
       "-e", inputEnv,
       "-e", "AGENT_PATH=/agent",
-      "-e", "AGENT_ENTRYPOINT=dist/index.js",
+      "-e", `AGENT_ENTRYPOINT=${entrypoint}`,
       "--cpus", "1",
       "--memory", "256m",
       "node:20-alpine",

@@ -76,9 +76,13 @@ export async function runCommand(agentName: string, options: { input?: string; s
 
   if (sandboxMode) {
     const dockerAvailable = await isDockerAvailable();
-    if (dockerAvailable) {
+    const canUseDockerSandbox =
+      manifest.tools.length === 0 &&
+      manifest.permissions.secrets.length === 0 &&
+      !manifest.model;
+    if (dockerAvailable && canUseDockerSandbox) {
       try {
-        const result = await runInSandbox(activePath, input);
+        const result = await runInSandbox(activePath, manifest.runtime.entrypoint, input);
         console.log(JSON.stringify(result, null, 2));
         return;
       } catch (error) {

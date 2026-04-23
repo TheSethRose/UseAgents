@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, access, cp, rm, stat, symlink, readlink } from "node:fs/promises";
+import { mkdir, readFile, writeFile, access, cp, rm, lstat, symlink, readlink } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 
@@ -39,14 +39,12 @@ export async function readJson<T>(path: string): Promise<T | undefined> {
   try {
     const content = await readFile(path, "utf-8");
     return JSON.parse(content) as T;
-  } catch {
-    return undefined;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return undefined;
+    }
+    throw error;
   }
-}
-
-export async function writeJson(path: string, data: unknown): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, JSON.stringify(data, null, 2) + "\n", "utf-8");
 }
 
 export async function readJsonl<T>(path: string): Promise<T[]> {
@@ -56,9 +54,17 @@ export async function readJsonl<T>(path: string): Promise<T[]> {
       .split("\n")
       .filter((line) => line.trim())
       .map((line) => JSON.parse(line) as T);
-  } catch {
-    return [];
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+    throw error;
   }
+}
+
+export async function writeJson(path: string, data: unknown): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, JSON.stringify(data, null, 2) + "\n", "utf-8");
 }
 
 export async function appendJsonl(path: string, data: unknown): Promise<void> {
@@ -89,10 +95,8 @@ export async function setActiveVersion(name: string, version: string): Promise<v
   await mkdir(ACTIVE_DIR, { recursive: true });
   
   try {
-    const linkStat = await stat(activePath);
-    if (linkStat.isSymbolicLink()) {
-      await rm(activePath);
-    }
+    await lstat(activePath);
+    await rm(activePath, { recursive: true, force: true });
   } catch {
   }
   

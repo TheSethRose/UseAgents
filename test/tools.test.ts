@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { matchDomain, isNetworkAllowed, createToolRegistry } from "../src/adapters/tools.js";
 import type { Manifest } from "../src/types.js";
 
@@ -98,5 +101,47 @@ describe("createToolRegistry sandbox", () => {
 
   it("throws for unknown tools", () => {
     expect(() => createToolRegistry(basePerms, ["unknown.tool"], "/tmp/agent")).toThrow(/Unknown tool/);
+  });
+});
+
+describe("createToolRegistry filesystem permissions", () => {
+  const basePerms: Manifest["permissions"] = {
+    network: false,
+    filesystem: { read: ["./data"], write: ["./data"] },
+    secrets: [],
+  };
+
+  it("allows paths inside an allowed directory", async () => {
+    const basePath = await mkdtemp(join(tmpdir(), "useagents-tools-"));
+    try {
+      await mkdir(join(basePath, "data"), { recursive: true });
+      await writeFile(join(basePath, "data", "input.txt"), "hello", "utf-8");
+
+      const registry = createToolRegistry(basePerms, ["fs.readText", "fs.writeText"], basePath);
+      await expect(registry["fs.readText"]({ path: "./data/input.txt" })).resolves.toEqual({
+        content: "hello",
+      });
+
+      await registry["fs.writeText"]({ path: "./data/output.txt", content: "written" });
+      await expect(readFile(join(basePath, "data", "output.txt"), "utf-8")).resolves.toBe("written");
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
+  it("denies sibling paths that share the same prefix", async () => {
+    const basePath = await mkdtemp(join(tmpdir(), "useagents-tools-"));
+    try {
+      await mkdir(join(basePath, "database"), { recursive: true });
+      await writeFile(join(basePath, "database", "secret.txt"), "secret", "utf-8");
+
+      const registry = createToolRegistry(basePerms, ["fs.readText", "fs.writeText"], basePath);
+      await expect(registry["fs.readText"]({ path: "./database/secret.txt" })).rejects.toThrow(/Read access denied/);
+      await expect(
+        registry["fs.writeText"]({ path: "./database/output.txt", content: "blocked" })
+      ).rejects.toThrow(/Write access denied/);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
   });
 });

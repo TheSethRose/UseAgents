@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import type { Manifest, ToolContext, AuditLogEntry } from "../types.js";
 import { UseAgentsError } from "../utils/errors.js";
 import { appendJsonl } from "../utils/filesystem.js";
@@ -15,7 +15,8 @@ function checkPathAllowed(path: string, allowedPaths: string[], basePath: string
   const normalized = normalizePath(path, basePath);
   for (const allowed of allowedPaths) {
     const normalizedAllowed = normalizePath(allowed, basePath);
-    if (normalized.startsWith(normalizedAllowed)) {
+    const relativePath = relative(normalizedAllowed, normalized);
+    if (relativePath === "" || (!relativePath.startsWith("..") && !isAbsolute(relativePath))) {
       return true;
     }
   }

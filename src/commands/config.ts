@@ -3,11 +3,10 @@ import { getRegistryUrl } from "../registry.js";
 
 export async function configCommand(): Promise<void> {
   console.log("==> Configuration");
-  console.log(`HOMEBREW_PREFIX: ${USEAGENTS_DIR}`);
-  console.log(`HOMEBREW_CELLAR: ${CACHE_DIR}`);
-  console.log(`HOMEBREW_REPOSITORY: ${USEAGENTS_DIR}`);
-  console.log(`HOMEBREW_STATE: ${STATE_DIR}`);
-  console.log(`HOMEBREW_SECRETS: ${SECRETS_DIR}`);
+  console.log(`USEAGENTS_HOME: ${USEAGENTS_DIR}`);
+  console.log(`USEAGENTS_CACHE: ${CACHE_DIR}`);
+  console.log(`USEAGENTS_STATE: ${STATE_DIR}`);
+  console.log(`USEAGENTS_SECRETS: ${SECRETS_DIR}`);
   console.log(`Registry URL: ${getRegistryUrl()}`);
 
   const envVars = [

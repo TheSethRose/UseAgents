@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hasGrantedPermissions } from "../src/utils/permissions.js";
+import { formatPermissionSummary, hasGrantedPermissions } from "../src/utils/permissions.js";
 import type { Manifest } from "../src/types.js";
 
 function makeManifest(overrides: Partial<Manifest["permissions"] & { tools: string[] }> = {}): Manifest {
@@ -139,5 +139,15 @@ describe("hasGrantedPermissions", () => {
       network: { enabled: false, domains: [] },
     });
     expect(hasGrantedPermissions(store, "test-agent", manifest)).toBe(true);
+  });
+});
+
+describe("formatPermissionSummary", () => {
+  it("shows allowed domains for enabled network allowlists", () => {
+    const manifest = makeManifest({
+      network: { enabled: true, domains: ["api.example.com"] },
+    });
+
+    expect(formatPermissionSummary(manifest)).toContain("Allowed domains: api.example.com");
   });
 });

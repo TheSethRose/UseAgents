@@ -65,14 +65,12 @@ export function formatPermissionSummary(manifest: Manifest): string {
 
   lines.push(`Network access: ${networkEnabled ? "YES" : "NO"}`);
 
-  if (!networkEnabled) {
-    const domains =
-      typeof manifest.permissions.network === "boolean"
-        ? []
-        : manifest.permissions.network.domains;
-    if (domains.length > 0) {
-      lines.push(`  Allowed domains: ${domains.join(", ")}`);
-    }
+  const domains =
+    typeof manifest.permissions.network === "boolean"
+      ? []
+      : manifest.permissions.network.domains;
+  if (domains.length > 0) {
+    lines.push(`Allowed domains: ${domains.join(", ")}`);
   }
 
   const readPaths = manifest.permissions.filesystem.read;

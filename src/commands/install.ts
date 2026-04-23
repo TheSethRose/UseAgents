@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { cwd } from "node:process";
 import { loadManifest } from "../utils/manifest.js";
 import { UseAgentsError } from "../utils/errors.js";
@@ -14,9 +15,9 @@ import {
   INSTALLS_FILE,
   CACHE_DIR,
 } from "../utils/filesystem.js";
-import { fetchRegistryAgent } from "../registry.js";
+import { fetchRegistryAgent, getRegistryUrl } from "../registry.js";
 import { loadManagedIntegrationFromRegistry, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
-import type { InstallRecord } from "../types.js";
+import type { InstallRecord, Manifest } from "../types.js";
 
 async function ensureEsmPackageJson(runtimeDir: string): Promise<void> {
   const pkgPath = join(runtimeDir, "package.json");
@@ -101,6 +102,126 @@ async function installManagedIntegration(name: string, options?: { force?: boole
   formatIntegrationResult(result);
 }
 
+async function findManifestRoot(extractDir: string): Promise<string> {
+  if (await pathExists(join(extractDir, "agent.yaml"))) {
+    return extractDir;
+  }
+
+  const entries = await readdir(extractDir, { withFileTypes: true });
+  const directories = entries.filter((entry) => entry.isDirectory());
+  if (directories.length === 1) {
+    const candidate = join(extractDir, directories[0].name);
+    if (await pathExists(join(candidate, "agent.yaml"))) {
+      return candidate;
+    }
+  }
+
+  throw new UseAgentsError("Registry agent tarball does not contain agent.yaml", "invalid_tarball");
+}
+
+async function installAgentFromPath(
+  sourcePath: string,
+  resolvedSource: string,
+  options?: { force?: boolean; verbose?: boolean }
+): Promise<Manifest> {
+  const manifest = await loadManifest(sourcePath);
+  const runtimeDir = getAgentRuntimeDir(manifest.name, manifest.version);
+
+  if (await pathExists(runtimeDir)) {
+    if (!options?.force) {
+      console.log(`Agent ${manifest.name}@${manifest.version} already installed. Use --force to overwrite.`);
+      return manifest;
+    }
+    if (options?.verbose) {
+      console.log(`==> Removing existing ${manifest.name}@${manifest.version}`);
+    }
+    await removeDir(runtimeDir);
+  }
+
+  await copyDir(sourcePath, runtimeDir);
+  await ensureEsmPackageJson(runtimeDir);
+  await setActiveVersion(manifest.name, manifest.version);
+
+  const installs = await readJson<InstallRecord[]>(INSTALLS_FILE) || [];
+  const existingIndex = installs.findIndex((i) => i.name === manifest.name);
+  const record: InstallRecord = {
+    name: manifest.name,
+    version: manifest.version,
+    source: resolvedSource,
+    installedAt: new Date().toISOString(),
+    active: true,
+  };
+
+  if (existingIndex >= 0) {
+    installs[existingIndex] = record;
+  } else {
+    installs.push(record);
+  }
+
+  await writeJson(INSTALLS_FILE, installs);
+
+  console.log(`Installed ${manifest.name}@${manifest.version}`);
+  console.log(`Permissions requested:`);
+  console.log(`  Network: ${manifest.permissions.network ? "yes" : "no"}`);
+  console.log(`  Secrets: ${manifest.permissions.secrets.join(", ") || "none"}`);
+  console.log(`  Tools: ${manifest.tools.join(", ") || "none"}`);
+  console.log(`  Filesystem read: ${manifest.permissions.filesystem.read.join(", ") || "none"}`);
+  console.log(`  Filesystem write: ${manifest.permissions.filesystem.write.join(", ") || "none"}`);
+
+  return manifest;
+}
+
+async function installDirectAgentFromRegistry(
+  name: string,
+  options?: { force?: boolean; verbose?: boolean }
+): Promise<void> {
+  const agent = await fetchRegistryAgent(name);
+  if (!agent) {
+    throw new UseAgentsError("Agent not found in registry", "agent_not_found", { name });
+  }
+
+  const version = agent.latest;
+  const versionInfo = agent.versions[version];
+  if (!versionInfo) {
+    throw new UseAgentsError("Registry agent version not found", "version_not_found", {
+      name,
+      version,
+    });
+  }
+  const cacheDir = join(CACHE_DIR, "registry", name, version);
+  const tarballPath = join(cacheDir, "agent.tar.gz");
+  const extractDir = join(cacheDir, "extract");
+
+  await removeDir(cacheDir);
+  await mkdir(cacheDir, { recursive: true });
+
+  const response = await fetch(`${getRegistryUrl()}/agents/${name}/${version}/tarball`);
+  if (!response.ok) {
+    throw new UseAgentsError("Failed to download registry agent tarball", "tarball_download_failed", {
+      name,
+      version,
+      status: response.status,
+    });
+  }
+
+  const tarball = Buffer.from(await response.arrayBuffer());
+  await writeFile(tarballPath, tarball);
+  await mkdir(extractDir, { recursive: true });
+
+  try {
+    execFileSync("tar", ["-xzf", tarballPath, "-C", extractDir], { stdio: "pipe" });
+  } catch (error) {
+    throw new UseAgentsError("Failed to extract registry agent tarball", "tarball_extract_failed", {
+      name,
+      version,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const sourcePath = await findManifestRoot(extractDir);
+  await installAgentFromPath(sourcePath, `${name}@${version}`, options);
+}
+
 export async function installCommand(source: string, options?: { force?: boolean; verbose?: boolean }): Promise<void> {
   const isGitSource = source.startsWith("github:") || source.startsWith("https://") || source.startsWith("git@");
   const isLocalPath = !isGitSource && (source.startsWith(".") || source.startsWith("/") || source.includes("/") || source.includes("\\"));
@@ -111,7 +232,13 @@ export async function installCommand(source: string, options?: { force?: boolean
       if (agent.type === "managed-integration") {
         return installManagedIntegration(source, options);
       }
-      throw new UseAgentsError("Packaged agent installation not yet supported", "not_supported", { source });
+      if (agent.type === "direct-agent" || agent.type === "packaged-agent") {
+        return installDirectAgentFromRegistry(source, options);
+      }
+      throw new UseAgentsError("Unsupported registry agent type", "unsupported_agent_type", {
+        source,
+        type: agent.type,
+      });
     }
   }
 
@@ -128,47 +255,5 @@ export async function installCommand(source: string, options?: { force?: boolean
     resolvedSource = sourcePath;
   }
   
-  const manifest = await loadManifest(sourcePath);
-  const runtimeDir = getAgentRuntimeDir(manifest.name, manifest.version);
-  
-  if (await pathExists(runtimeDir)) {
-    if (!options?.force) {
-      console.log(`Agent ${manifest.name}@${manifest.version} already installed. Use --force to overwrite.`);
-      return;
-    }
-    if (options?.verbose) {
-      console.log(`==> Removing existing ${manifest.name}@${manifest.version}`);
-    }
-    await removeDir(runtimeDir);
-  }
-  
-  await copyDir(sourcePath, runtimeDir);
-  await ensureEsmPackageJson(runtimeDir);
-  await setActiveVersion(manifest.name, manifest.version);
-  
-  const installs = await readJson<InstallRecord[]>(INSTALLS_FILE) || [];
-  const existingIndex = installs.findIndex((i) => i.name === manifest.name);
-  const record: InstallRecord = {
-    name: manifest.name,
-    version: manifest.version,
-    source: resolvedSource,
-    installedAt: new Date().toISOString(),
-    active: true,
-  };
-  
-  if (existingIndex >= 0) {
-    installs[existingIndex] = record;
-  } else {
-    installs.push(record);
-  }
-  
-  await writeJson(INSTALLS_FILE, installs);
-  
-  console.log(`Installed ${manifest.name}@${manifest.version}`);
-  console.log(`Permissions requested:`);
-  console.log(`  Network: ${manifest.permissions.network ? "yes" : "no"}`);
-  console.log(`  Secrets: ${manifest.permissions.secrets.join(", ") || "none"}`);
-  console.log(`  Tools: ${manifest.tools.join(", ") || "none"}`);
-  console.log(`  Filesystem read: ${manifest.permissions.filesystem.read.join(", ") || "none"}`);
-  console.log(`  Filesystem write: ${manifest.permissions.filesystem.write.join(", ") || "none"}`);
+  await installAgentFromPath(sourcePath, resolvedSource, options);
 }
