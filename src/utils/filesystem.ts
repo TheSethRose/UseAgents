@@ -8,6 +8,7 @@ export const ACTIVE_DIR = join(USEAGENTS_DIR, "active");
 export const STATE_DIR = join(USEAGENTS_DIR, "state");
 export const SECRETS_DIR = join(USEAGENTS_DIR, "secrets");
 export const CACHE_DIR = join(USEAGENTS_DIR, "cache");
+export const INTEGRATIONS_CACHE_DIR = join(CACHE_DIR, "integrations");
 
 export const INSTALLS_FILE = join(STATE_DIR, "installs.json");
 export const INTEGRATIONS_FILE = join(STATE_DIR, "integrations.json");

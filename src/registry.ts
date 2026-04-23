@@ -6,29 +6,43 @@ export function getRegistryUrl(): string {
   return process.env.USEAGENTS_REGISTRY ?? DEFAULT_REGISTRY_URL;
 }
 
-export type RegistryEntryType = "packaged-agent" | "managed-integration";
-
-export interface RegistryEntry {
-  path: string;
-  type: RegistryEntryType;
+export interface RegistryAgentVersion {
+  manifestUrl: string;
+  tarballUrl: string;
+  wrapperUrl?: string;
+  publishedAt: string;
 }
 
-export const interimRegistry: Record<string, RegistryEntry> = {};
-
-export function resolveInRegistry(name: string): RegistryEntry | undefined {
-  return interimRegistry[name];
+export interface RegistryAgent {
+  name: string;
+  type: "packaged-agent" | "managed-integration";
+  description: string;
+  author: string;
+  versions: Record<string, RegistryAgentVersion>;
+  latest: string;
 }
 
-export function isManagedIntegration(name: string): boolean {
-  return resolveInRegistry(name)?.type === "managed-integration";
+export async function fetchRegistryAgent(name: string): Promise<RegistryAgent | undefined> {
+  const registryUrl = getRegistryUrl();
+  try {
+    const res = await fetch(`${registryUrl}/agents/${name}`);
+    if (!res.ok) {
+      return undefined;
+    }
+    return (await res.json()) as RegistryAgent;
+  } catch {
+    return undefined;
+  }
 }
 
-export function isPackagedAgent(name: string): boolean {
-  return resolveInRegistry(name)?.type === "packaged-agent";
+export async function isManagedIntegration(name: string): Promise<boolean> {
+  const agent = await fetchRegistryAgent(name);
+  return agent?.type === "managed-integration";
 }
 
-export function listRegistryEntries(): Array<{ name: string } & RegistryEntry> {
-  return Object.entries(interimRegistry).map(([name, entry]) => ({ name, ...entry }));
+export async function isPackagedAgent(name: string): Promise<boolean> {
+  const agent = await fetchRegistryAgent(name);
+  return agent?.type === "packaged-agent";
 }
 
 export async function getAuthToken(): Promise<string | undefined> {

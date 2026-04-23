@@ -1,6 +1,8 @@
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { writeFile, mkdir } from "node:fs/promises";
 import type { ManagedIntegrationRecord, IntegrationStore, IntegrationActionResult, ManagedIntegration } from "../types.js";
-import { INTEGRATIONS_FILE, readJson, writeJson, pathExists } from "./filesystem.js";
+import { INTEGRATIONS_FILE, INTEGRATIONS_CACHE_DIR, readJson, writeJson, pathExists } from "./filesystem.js";
+import { fetchRegistryAgent, getRegistryUrl } from "../registry.js";
 
 export async function loadIntegrationStore(): Promise<IntegrationStore> {
   const store = await readJson<IntegrationStore>(INTEGRATIONS_FILE);
@@ -36,6 +38,43 @@ export async function loadManagedIntegration(path: string): Promise<ManagedInteg
   const mod = await import(indexPath);
   if (!mod.integration) {
     throw new Error(`Managed integration at ${path} does not export 'integration'`);
+  }
+  return mod.integration as ManagedIntegration;
+}
+
+async function downloadWrapperJs(url: string, destPath: string): Promise<void> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Wrapper download failed: ${res.status} ${res.statusText}`);
+  }
+  const code = await res.text();
+  await mkdir(dirname(destPath), { recursive: true });
+  await writeFile(destPath, code, "utf-8");
+}
+
+export async function loadManagedIntegrationFromRegistry(name: string): Promise<ManagedIntegration> {
+  const agent = await fetchRegistryAgent(name);
+  if (!agent || agent.type !== "managed-integration") {
+    throw new Error(`Managed integration not found in registry: ${name}`);
+  }
+
+  const version = agent.latest;
+  const versionInfo = agent.versions[version];
+  if (!versionInfo) {
+    throw new Error(`Version ${version} not found for ${name}`);
+  }
+
+  const wrapperUrl = `${getRegistryUrl()}/agents/${name}/${version}/wrapper`;
+  const integrationCacheDir = join(INTEGRATIONS_CACHE_DIR, name, version);
+  const wrapperPath = join(integrationCacheDir, "wrapper.mjs");
+
+  if (!await pathExists(wrapperPath)) {
+    await downloadWrapperJs(wrapperUrl, wrapperPath);
+  }
+
+  const mod = await import(wrapperPath);
+  if (!mod.integration) {
+    throw new Error(`Wrapper at ${wrapperPath} does not export 'integration'`);
   }
   return mod.integration as ManagedIntegration;
 }

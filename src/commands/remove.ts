@@ -5,7 +5,7 @@ import { removeIntegrationRecord } from "../utils/integrations.js";
 import type { InstallRecord } from "../types.js";
 
 export async function removeCommand(agentName: string): Promise<void> {
-  if (isManagedIntegration(agentName)) {
+  if (await isManagedIntegration(agentName)) {
     await removeIntegrationRecord(agentName);
     console.log(`Removed ${agentName} from UseAgents (upstream installation left intact).`);
     return;

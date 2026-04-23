@@ -14,8 +14,8 @@ export const manifestSchema = z.object({
       model: z.string(),
     })
     .optional(),
-  inputs: z.record(z.unknown()).optional(),
-  outputs: z.record(z.unknown()).optional(),
+  inputs: z.record(z.string(), z.unknown()).optional(),
+  outputs: z.record(z.string(), z.unknown()).optional(),
   permissions: z.object({
     network: z.union([
       z.boolean().default(false),

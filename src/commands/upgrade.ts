@@ -1,8 +1,8 @@
 import { readJson, INSTALLS_FILE } from "../utils/filesystem.js";
 import { UseAgentsError } from "../utils/errors.js";
 import { installCommand } from "./install.js";
-import { resolveInRegistry, isManagedIntegration } from "../registry.js";
-import { loadManagedIntegration, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
+import { isManagedIntegration } from "../registry.js";
+import { loadManagedIntegrationFromRegistry, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
 import type { InstallRecord } from "../types.js";
 
 export async function upgradeCommand(agentName?: string): Promise<void> {
@@ -18,9 +18,8 @@ export async function upgradeCommand(agentName?: string): Promise<void> {
   }
 
   if (agentName && targets.length === 0) {
-    if (isManagedIntegration(agentName)) {
-      const entry = resolveInRegistry(agentName)!;
-      const integration = await loadManagedIntegration(entry.path);
+    if (await isManagedIntegration(agentName)) {
+      const integration = await loadManagedIntegrationFromRegistry(agentName);
       const result = await integration.update({});
       await upsertIntegrationRecord({
         name: integration.name,

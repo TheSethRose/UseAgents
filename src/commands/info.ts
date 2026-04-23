@@ -1,8 +1,8 @@
 import { pathExists, getAgentActivePath, readJson, INSTALLS_FILE } from "../utils/filesystem.js";
 import { loadManifest } from "../utils/manifest.js";
 import { UseAgentsError } from "../utils/errors.js";
-import { resolveInRegistry, isManagedIntegration } from "../registry.js";
-import { loadManagedIntegration, formatIntegrationResult } from "../utils/integrations.js";
+import { isManagedIntegration } from "../registry.js";
+import { loadManagedIntegrationFromRegistry, formatIntegrationResult } from "../utils/integrations.js";
 import type { InstallRecord } from "../types.js";
 
 export async function infoCommand(agentName: string | string[], ...rest: unknown[]): Promise<void> {
@@ -17,9 +17,8 @@ export async function infoCommand(agentName: string | string[], ...rest: unknown
       console.log(`==> ${name}`);
     }
 
-    if (isManagedIntegration(name)) {
-      const entry = resolveInRegistry(name)!;
-      const integration = await loadManagedIntegration(entry.path);
+    if (await isManagedIntegration(name)) {
+      const integration = await loadManagedIntegrationFromRegistry(name);
       const result = await integration.info();
       formatIntegrationResult(result);
       continue;

@@ -14,8 +14,8 @@ import {
   INSTALLS_FILE,
   CACHE_DIR,
 } from "../utils/filesystem.js";
-import { resolveInRegistry } from "../registry.js";
-import { loadManagedIntegration, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
+import { fetchRegistryAgent } from "../registry.js";
+import { loadManagedIntegrationFromRegistry, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
 import type { InstallRecord } from "../types.js";
 
 async function ensureEsmPackageJson(runtimeDir: string): Promise<void> {
@@ -80,45 +80,52 @@ export async function resolveLocalSourcePath(source: string): Promise<string> {
   throw new UseAgentsError("Source path does not exist", "source_not_found", { path: directPath });
 }
 
-export async function installCommand(source: string, options?: { force?: boolean; verbose?: boolean }): Promise<void> {
-  const registryEntry = resolveInRegistry(source);
+async function installManagedIntegration(name: string, options?: { force?: boolean }): Promise<void> {
+  console.log(`Installing ${name}...`);
+  const integration = await loadManagedIntegrationFromRegistry(name);
+  const result = await integration.install({ force: options?.force });
+  await upsertIntegrationRecord({
+    name: integration.name,
+    kind: "managed-external",
+    wrapperVersion: integration.wrapperVersion,
+    installedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    upstream: {
+      installed: result.status.endsWith("_installed") || result.status.endsWith("_updated"),
+      version: result.version,
+      binaryPath: result.binaryPath,
+      installMethod: "official-installer",
+      lastCheckedAt: new Date().toISOString(),
+    },
+  });
+  formatIntegrationResult(result);
+}
 
-  if (registryEntry?.type === "managed-integration") {
-    const integration = await loadManagedIntegration(registryEntry.path);
-    const result = await integration.install({ force: options?.force });
-    await upsertIntegrationRecord({
-      name: integration.name,
-      kind: "managed-external",
-      wrapperVersion: integration.wrapperVersion,
-      installedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      upstream: {
-        installed: result.status.endsWith("_installed") || result.status.endsWith("_updated"),
-        version: result.version,
-        binaryPath: result.binaryPath,
-        installMethod: "official-installer",
-        lastCheckedAt: new Date().toISOString(),
-      },
-    });
-    formatIntegrationResult(result);
-    return;
+export async function installCommand(source: string, options?: { force?: boolean; verbose?: boolean }): Promise<void> {
+  const isGitSource = source.startsWith("github:") || source.startsWith("https://") || source.startsWith("git@");
+  const isLocalPath = !isGitSource && (source.startsWith(".") || source.startsWith("/") || source.includes("/") || source.includes("\\"));
+
+  if (!isGitSource && !isLocalPath) {
+    const agent = await fetchRegistryAgent(source);
+    if (agent) {
+      if (agent.type === "managed-integration") {
+        return installManagedIntegration(source, options);
+      }
+      throw new UseAgentsError("Packaged agent installation not yet supported", "not_supported", { source });
+    }
   }
 
-  const isLocal = !source.startsWith("github:") && !source.startsWith("https://") && !source.startsWith("git@");
   let sourcePath: string;
   let resolvedSource = source;
 
-  if (registryEntry?.type === "packaged-agent") {
-    sourcePath = registryEntry.path;
-    resolvedSource = sourcePath;
-  } else if (isLocal) {
-    sourcePath = await resolveLocalSourcePath(source);
-    resolvedSource = sourcePath;
-  } else {
+  if (isGitSource) {
     const git = parseGitSource(source);
     console.log(`Cloning ${git.url}...`);
     sourcePath = await cloneGitRepo(git.url);
     resolvedSource = git.url;
+  } else {
+    sourcePath = await resolveLocalSourcePath(source);
+    resolvedSource = sourcePath;
   }
   
   const manifest = await loadManifest(sourcePath);
