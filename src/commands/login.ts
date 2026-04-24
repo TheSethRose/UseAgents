@@ -24,7 +24,7 @@ function readStdinLine(): Promise<string> {
 
 export async function loginCommand(): Promise<void> {
   console.log("Authenticate with the UseAgents registry.");
-  console.log("Visit https://useagents.io/settings to copy your session token.");
+  console.log("Sign in at https://useagents.io/settings to copy your session token.");
   console.log("\nPaste your session token: ");
 
   const token = await readStdinLine();
@@ -33,12 +33,12 @@ export async function loginCommand(): Promise<void> {
     throw new UseAgentsError("No token provided", "login_cancelled");
   }
 
-  // Validate token by pinging the registry session endpoint
+  // Validate token by pinging the registry session endpoint.
   const registryUrl = getRegistryUrl();
   try {
-    const response = await fetch(`${registryUrl.replace(/\/v1$/, "")}/auth/session`, {
+    const response = await fetch(`${registryUrl.replace(/\/$/, "")}/get-session`, {
       headers: {
-        cookie: `session=${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 

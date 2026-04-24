@@ -117,7 +117,7 @@ agent login
 agent logout
 ```
 
-`agent login` prompts for a registry session token, validates it against the registry auth endpoint, and stores it in `~/.useagents/state/auth.json`. Auth is used for registry publish/update APIs that require a logged-in session and verified email.
+`agent login` prompts for a registry session token from `https://useagents.io/settings`, validates it against the registry auth endpoint, and stores it in `~/.useagents/state/auth.json`. Auth is used for registry publish/update APIs that require a logged-in session and verified email.
 
 Registry installs use canonical registry artifact routes rather than publisher-supplied artifact URLs. If registry metadata includes an artifact SHA-256 checksum, the CLI verifies the downloaded tarball or managed-integration wrapper before installing. Deprecated packages install with a warning; yanked, quarantined, archived, or deleted packages do not install.
 
