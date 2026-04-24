@@ -1,6 +1,6 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { ACTIVE_DIR, getAgentActivePath, INSTALLS_FILE, pathExists, readJson } from "../utils/filesystem.js";
+import { ACTIVE_DIR, decodeAgentPathName, getAgentActivePath, INSTALLS_FILE, pathExists, readJson } from "../utils/filesystem.js";
 import { loadIntegrationStore } from "../utils/integrations.js";
 import { loadManifest } from "../utils/manifest.js";
 import { printTable, section } from "../utils/cli.js";
@@ -15,7 +15,6 @@ interface AgentRow {
 
 interface IntegrationRow {
   name: string;
-  version: string;
   method: string;
   status: string;
 }
@@ -62,14 +61,12 @@ export async function listCommand(agentName?: string): Promise<void> {
       const record = store.integrations[name];
       return {
         name,
-        version: record.upstream.version ?? "unknown",
         method: record.upstream.installMethod ?? "unknown",
         status: record.upstream.installed ? "installed" : "not installed",
       };
     });
     printTable(rows, [
       { header: "Name", value: (row) => row.name },
-      { header: "Version", value: (row) => row.version },
       { header: "Method", value: (row) => row.method },
       { header: "Status", value: (row) => row.status },
     ]);
@@ -104,7 +101,7 @@ async function getInstalledAgentNames(): Promise<string[]> {
       continue;
     }
     if (await pathExists(join(ACTIVE_DIR, name))) {
-      names.push(name);
+      names.push(decodeAgentPathName(name));
     }
   }
 

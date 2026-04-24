@@ -29,11 +29,13 @@ Requirements:
 ```bash
 agent search claude-code
 agent search hello
+agent search --type agent
+agent search --type integration --page 2 --limit 5
 agent get hello-world
 agent get claude-code
 ```
 
-`agent search` lists registry matches with their type, latest version, description, and install command. `agent get` shows registry metadata and available artifacts for one entry.
+`agent search` lists registry matches with their type, description, and install command. Direct agents show their latest agent version; managed integrations intentionally do not show wrapper versions.
 
 ### Install
 
@@ -44,6 +46,7 @@ agent install openclaw
 
 # Direct agents install runnable code from registry tarballs
 agent install hello-world
+agent install @your-scope/hello-world
 
 # Direct agents can also be installed from local folders or git
 agent install ./path/to/agent
@@ -114,13 +117,15 @@ agent login
 agent logout
 ```
 
-`agent login` prompts for a registry session token, validates it against the registry auth endpoint, and stores it in `~/.useagents/state/auth.json`. Auth is used for registry publish/update APIs that require a logged-in session.
+`agent login` prompts for a registry session token, validates it against the registry auth endpoint, and stores it in `~/.useagents/state/auth.json`. Auth is used for registry publish/update APIs that require a logged-in session and verified email.
+
+Registry installs use canonical registry artifact routes rather than publisher-supplied artifact URLs. If registry metadata includes an artifact SHA-256 checksum, the CLI verifies the downloaded tarball or managed-integration wrapper before installing. Deprecated packages install with a warning; yanked, quarantined, archived, or deleted packages do not install.
 
 ## Command Reference
 
 | Command | Description |
 |---|---|
-| `agent search <text>` | Search registry entries by name or description |
+| `agent search [text] [--type agent\|integration] [--page n] [--limit n]` | Search or browse registry entries |
 | `agent get <agent>` | Show registry metadata for one entry |
 | `agent install <source>` | Install a managed integration, registry direct agent, local folder, or git repo |
 | `agent list [agent]` | List installed direct agents and managed integrations |
@@ -171,7 +176,7 @@ export async function run(input, ctx) {
 ### Manifest Reference
 
 ```yaml
-name: hello-world                 # kebab-case identifier
+name: hello-world                 # kebab-case identifier, or @scope/name for registry packages
 version: 1.0.0                    # x.y.z semver
 description: "A simple hello world agent"
 

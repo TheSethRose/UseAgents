@@ -80,19 +80,31 @@ export async function removeDir(path: string): Promise<void> {
   await rm(path, { recursive: true, force: true });
 }
 
+export function encodeAgentPathName(name: string): string {
+  return encodeURIComponent(name);
+}
+
+export function decodeAgentPathName(name: string): string {
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return name;
+  }
+}
+
 export function getAgentRuntimeDir(name: string, version: string): string {
-  return join(RUNTIMES_DIR, name, version);
+  return join(RUNTIMES_DIR, encodeAgentPathName(name), version);
 }
 
 export function getAgentActivePath(name: string): string {
-  return join(ACTIVE_DIR, name);
+  return join(ACTIVE_DIR, encodeAgentPathName(name));
 }
 
 export async function setActiveVersion(name: string, version: string): Promise<void> {
   const runtimeDir = getAgentRuntimeDir(name, version);
   const activePath = getAgentActivePath(name);
   
-  await mkdir(ACTIVE_DIR, { recursive: true });
+  await mkdir(dirname(activePath), { recursive: true });
   
   try {
     await lstat(activePath);

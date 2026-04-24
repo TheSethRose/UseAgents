@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const manifestSchema = z.object({
-  name: z.string().regex(/^[a-z0-9-]+$/, "Name must be kebab-case"),
+  name: z.string().regex(/^(?:@[a-z0-9][a-z0-9-]*\/)?[a-z0-9][a-z0-9-]*$/, "Name must be kebab-case, optionally scoped as @scope/name"),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, "Version must be semver"),
   description: z.string().min(1),
   runtime: z.object({

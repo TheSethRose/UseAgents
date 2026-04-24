@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { execFileSync, execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { cwd } from "node:process";
 import { loadManifest } from "../utils/manifest.js";
@@ -15,7 +16,12 @@ import {
   INSTALLS_FILE,
   CACHE_DIR,
 } from "../utils/filesystem.js";
-import { fetchRegistryAgent, getRegistryUrl } from "../registry.js";
+import {
+  assertRegistryVersionInstallable,
+  fetchRegistryAgent,
+  getRegistryArtifactUrl,
+  isRegistryPackageName,
+} from "../registry.js";
 import { loadManagedIntegrationFromRegistry, upsertIntegrationRecord, formatIntegrationResult } from "../utils/integrations.js";
 import { printKeyValues, section } from "../utils/cli.js";
 import type { InstallRecord, Manifest } from "../types.js";
@@ -42,6 +48,10 @@ function parseGitSource(source: string): { url: string; shorthand: boolean } {
     return { url: source, shorthand: false };
   }
   return { url: source, shorthand: false };
+}
+
+function sha256(buffer: Buffer): string {
+  return createHash("sha256").update(buffer).digest("hex");
 }
 
 async function cloneGitRepo(url: string): Promise<string> {
@@ -199,14 +209,16 @@ async function installDirectAgentFromRegistry(
       version,
     });
   }
-  const cacheDir = join(CACHE_DIR, "registry", name, version);
+  assertRegistryVersionInstallable(agent, versionInfo, version);
+
+  const cacheDir = join(CACHE_DIR, "registry", encodeURIComponent(name), version);
   const tarballPath = join(cacheDir, "agent.tar.gz");
   const extractDir = join(cacheDir, "extract");
 
   await removeDir(cacheDir);
   await mkdir(cacheDir, { recursive: true });
 
-  const response = await fetch(`${getRegistryUrl()}/agents/${name}/${version}/tarball`);
+  const response = await fetch(getRegistryArtifactUrl(name, version, "tarball"));
   if (!response.ok) {
     throw new UseAgentsError("Failed to download registry agent tarball", "tarball_download_failed", {
       name,
@@ -216,6 +228,12 @@ async function installDirectAgentFromRegistry(
   }
 
   const tarball = Buffer.from(await response.arrayBuffer());
+  if (versionInfo.artifactSha256 && sha256(tarball) !== versionInfo.artifactSha256) {
+    throw new UseAgentsError("Registry agent tarball checksum mismatch", "artifact_checksum_mismatch", {
+      name,
+      version,
+    });
+  }
   await writeFile(tarballPath, tarball);
   await mkdir(extractDir, { recursive: true });
 
@@ -235,9 +253,10 @@ async function installDirectAgentFromRegistry(
 
 export async function installCommand(source: string, options?: { force?: boolean; verbose?: boolean }): Promise<void> {
   const isGitSource = source.startsWith("github:") || source.startsWith("https://") || source.startsWith("git@");
-  const isLocalPath = !isGitSource && (source.startsWith(".") || source.startsWith("/") || source.includes("/") || source.includes("\\"));
+  const isRegistryName = isRegistryPackageName(source);
+  const isLocalPath = !isGitSource && !isRegistryName && (source.startsWith(".") || source.startsWith("/") || source.includes("/") || source.includes("\\"));
 
-  if (!isGitSource && !isLocalPath) {
+  if (!isGitSource && !isLocalPath && isRegistryName) {
     const agent = await fetchRegistryAgent(source);
     if (agent) {
       if (agent.type === "managed-integration") {

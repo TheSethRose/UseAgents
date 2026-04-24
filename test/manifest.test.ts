@@ -75,6 +75,14 @@ describe("manifestSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts scoped registry package names", () => {
+    const result = manifestSchema.safeParse({
+      ...validManifest,
+      name: "@seth/hello-world",
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects invalid version", () => {
     const result = manifestSchema.safeParse({
       ...validManifest,

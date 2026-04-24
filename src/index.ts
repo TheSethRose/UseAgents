@@ -40,8 +40,11 @@ program.hook("preAction", async () => {
 });
 
 program
-  .command("search <text>")
+  .command("search [text]")
   .description("Search for agents by name or description")
+  .option("-t, --type <type>", "Filter by type: agent or integration")
+  .option("-p, --page <number>", "Page number", "1")
+  .option("-l, --limit <number>", "Results per page", "10")
   .action(searchCommand);
 
 program

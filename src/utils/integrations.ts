@@ -1,8 +1,9 @@
 import { join, dirname } from "node:path";
+import { createHash } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import type { ManagedIntegrationRecord, IntegrationStore, IntegrationActionResult, ManagedIntegration } from "../types.js";
 import { INTEGRATIONS_FILE, INTEGRATIONS_CACHE_DIR, readJson, writeJson, pathExists } from "./filesystem.js";
-import { fetchRegistryAgent, getRegistryUrl } from "../registry.js";
+import { assertRegistryVersionInstallable, fetchRegistryAgent, getRegistryArtifactUrl } from "../registry.js";
 import { printKeyValues, section } from "./cli.js";
 
 export async function loadIntegrationStore(): Promise<IntegrationStore> {
@@ -43,12 +44,19 @@ export async function loadManagedIntegration(path: string): Promise<ManagedInteg
   return mod.integration as ManagedIntegration;
 }
 
-async function downloadWrapperJs(url: string, destPath: string): Promise<void> {
+function sha256(content: string): string {
+  return createHash("sha256").update(content, "utf-8").digest("hex");
+}
+
+async function downloadWrapperJs(url: string, destPath: string, expectedSha256?: string): Promise<void> {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Wrapper download failed: ${res.status} ${res.statusText}`);
   }
   const code = await res.text();
+  if (expectedSha256 && sha256(code) !== expectedSha256) {
+    throw new Error("Wrapper checksum mismatch");
+  }
   await mkdir(dirname(destPath), { recursive: true });
   await writeFile(destPath, code, "utf-8");
 }
@@ -64,12 +72,13 @@ export async function loadManagedIntegrationFromRegistry(name: string): Promise<
   if (!versionInfo) {
     throw new Error(`Version ${version} not found for ${name}`);
   }
+  assertRegistryVersionInstallable(agent, versionInfo, version);
 
-  const wrapperUrl = `${getRegistryUrl()}/agents/${name}/${version}/wrapper`;
-  const integrationCacheDir = join(INTEGRATIONS_CACHE_DIR, name, version);
+  const wrapperUrl = getRegistryArtifactUrl(name, version, "wrapper");
+  const integrationCacheDir = join(INTEGRATIONS_CACHE_DIR, encodeURIComponent(name), version);
   const wrapperPath = join(integrationCacheDir, "wrapper.mjs");
 
-  await downloadWrapperJs(wrapperUrl, wrapperPath);
+  await downloadWrapperJs(wrapperUrl, wrapperPath, versionInfo.artifactSha256);
 
   const mod = await import(`${wrapperPath}?t=${Date.now()}`);
   if (!mod.integration) {
@@ -85,8 +94,6 @@ export function formatIntegrationResult(result: IntegrationActionResult): void {
 
   const rows = ([
     ["Status", formatStatus(result.status)],
-    ["Version", result.version],
-    ["Previous", result.previousVersion],
     ["Binary", result.binaryPath],
   ] as Array<[string, unknown]>).filter(([, value]) => value !== undefined);
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Maintainer documentation now includes `.developer/docs/guides/registry-security-model.md`, a recommended phased security model for opening registry publishing safely.
+- Registry security hardening now has phase-1 implementation hooks: namespace/package ACLs, verified-email write gates, immutable version publishing, write audit logs, lifecycle states, canonical artifact URLs, scoped package install support, and CLI checksum/status enforcement.
 
 ### Changed
 - Documentation now reflects the current split between direct agents and managed integrations.
@@ -20,9 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Gaps
 - Registry backup/restore for JSON registry data is not implemented yet.
-- Open registry publishing does not yet enforce package ownership, namespace-scoped publish rights, immutable releases, verified-email publish gates, or registry write audit logs; this hardening is planned to ship incrementally.
+- Registry package authorization still uses the flat-file compatibility layer at runtime while the Prisma-backed package tables are introduced.
+- Publish tokens, trusted OIDC publishing, malware scanning, and a complete artifact upload/finalization pipeline are not implemented yet.
 - Managed integration listings and detail views still expose wrapper versions in places where users may reasonably read them as the upstream app version; integration UX needs to hide generic version display by default and only surface wrapper versions when explicitly relevant.
-- Registry/CLI search does not yet support type filtering (`agent` vs `integration`) or a paginated full-list browsing flow.
 - `USEAGENTS_REGISTRY_CACHE_TTL` and `USEAGENTS_OFFLINE` are visible in `agent config` but are reserved for future behavior.
 
 ## [0.3.5] - 2026-04-23
@@ -56,12 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Roadmap]
 
 ### 0.4.0 - Registry Publishing Hardening & Discovery UX
-- [ ] Package ownership and namespace-scoped publishing
-- [ ] Verified-email publish requirement for registry writes
-- [ ] Immutable releases with deprecate/yank/quarantine flows
-- [ ] Registry audit logs for package and version write actions
-- [ ] Official curated namespace with admin/maintainer-only publishing
-- [ ] Restrict community publishing to direct agents until managed integration provenance is in place
+- [x] Package ownership and namespace-scoped publishing
+- [x] Verified-email publish requirement for registry writes
+- [x] Immutable releases with deprecate/yank/quarantine flows
+- [x] Registry audit logs for package and version write actions
+- [x] Official curated namespace with admin/maintainer-only publishing
+- [x] Restrict community publishing to direct agents until managed integration provenance is in place
 - [ ] Hide managed integration version display in search/list/detail output by default so wrapper versions are not mistaken for upstream app versions
 - [ ] Improve search with type filters for direct agents vs managed integrations
 - [ ] Add a paginated full-list browsing mode for registry entries with next/previous navigation

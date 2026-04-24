@@ -1,9 +1,8 @@
-import { getRegistryUrl } from "../registry.js";
+import { getRegistryPackageUrl } from "../registry.js";
 import { printKeyValues, printTable, section } from "../utils/cli.js";
 
 export async function getCommand(agentName: string): Promise<void> {
-  const registryUrl = getRegistryUrl();
-  const url = `${registryUrl}/agents/${agentName}`;
+  const url = getRegistryPackageUrl(agentName);
 
   try {
     const res = await fetch(url);
@@ -23,7 +22,8 @@ export async function getCommand(agentName: string): Promise<void> {
       description: string;
       author: string;
       latest: string;
-      versions: Record<string, { publishedAt: string; tarballUrl?: string; wrapperUrl?: string }>;
+      status?: string;
+      versions: Record<string, { publishedAt: string; tarballUrl?: string; wrapperUrl?: string; status?: string; artifactSha256?: string }>;
     };
 
     const isManaged = data.type === "managed-integration";
@@ -34,7 +34,8 @@ export async function getCommand(agentName: string): Promise<void> {
     printKeyValues([
       ["Type", isManaged ? "managed integration" : "direct agent"],
       ["Author", data.author],
-      ["Latest", data.latest],
+      ["Status", data.status ?? "active"],
+      ...(!isManaged ? [["Latest", data.latest] as [string, unknown]] : []),
       ["Registry", url],
       ["Page", `https://useagents.io/agents/${data.name}`],
     ]);
@@ -42,12 +43,14 @@ export async function getCommand(agentName: string): Promise<void> {
     const versionRows = Object.keys(data.versions).sort().map((version) => ({
       version,
       published: data.versions[version].publishedAt?.split("T")[0] ?? "unknown",
+      status: data.versions[version].status ?? "active",
       artifact: data.versions[version].wrapperUrl ? "wrapper" : data.versions[version].tarballUrl ? "tarball" : "manifest",
     }));
-    if (versionRows.length > 0) {
+    if (!isManaged && versionRows.length > 0) {
       console.log("\n==> Versions");
       printTable(versionRows, [
         { header: "Version", value: (row) => row.version },
+        { header: "Status", value: (row) => row.status },
         { header: "Published", value: (row) => row.published },
         { header: "Artifact", value: (row) => row.artifact },
       ]);
