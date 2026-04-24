@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-04-24
+
 ### Added
 - Maintainer documentation now includes `.developer/docs/guides/registry-security-model.md`, a recommended phased security model for opening registry publishing safely.
 - Registry security hardening now has phase-1 implementation hooks: namespace/package ACLs, verified-email write gates, immutable version publishing, write audit logs, lifecycle states, canonical artifact URLs, scoped package install support, and CLI checksum/status enforcement.
