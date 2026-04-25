@@ -6,10 +6,10 @@ import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
 const bump = process.argv[2] ?? "patch";
-const allowedBumps = new Set(["patch", "minor", "major"]);
+const allowedBumps = new Set(["patch", "minor", "major", "resume"]);
 
 if (!allowedBumps.has(bump)) {
-  console.error(`Unsupported release bump "${bump}". Use patch, minor, or major.`);
+  console.error(`Unsupported release bump "${bump}". Use patch, minor, major, or resume.`);
   process.exit(1);
 }
 
@@ -19,24 +19,31 @@ if (!branch) {
   process.exit(1);
 }
 
-const initialStatus = run("git", ["status", "--short"]).trim();
-if (initialStatus) {
-  const rl = createInterface({ input, output });
-  const answer = await rl.question("Working tree has changes. Include them in the release commit? [y/N] ");
-  rl.close();
-  if (!/^y(es)?$/i.test(answer.trim())) {
-    console.error("Release aborted. Commit or stash existing changes first.");
-    process.exit(1);
-  }
-}
+assertNpmAuthenticated();
+assertNpmOwner();
 
-runInherited("npm", ["version", bump, "--no-git-tag-version"]);
+if (bump !== "resume") {
+  const initialStatus = run("git", ["status", "--short"]).trim();
+  if (initialStatus) {
+    const rl = createInterface({ input, output });
+    const answer = await rl.question("Working tree has changes. Include them in the release commit? [y/N] ");
+    rl.close();
+    if (!/^y(es)?$/i.test(answer.trim())) {
+      console.error("Release aborted. Commit or stash existing changes first.");
+      process.exit(1);
+    }
+  }
+
+  runInherited("npm", ["version", bump, "--no-git-tag-version"]);
+}
 
 const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const version = packageJson.version;
 const tag = `v${version}`;
 
-if (tagExists(tag)) {
+if (bump === "resume") {
+  assertTagAtHead(tag);
+} else if (tagExists(tag)) {
   console.error(`Tag ${tag} already exists.`);
   process.exit(1);
 }
@@ -49,9 +56,11 @@ if (!/^\d{6,8}$/.test(otp)) {
   process.exit(1);
 }
 
-runInherited("git", ["add", "-A"]);
-runInherited("git", ["commit", "-m", `release: cli ${tag}`]);
-runInherited("git", ["tag", tag]);
+if (bump !== "resume") {
+  runInherited("git", ["add", "-A"]);
+  runInherited("git", ["commit", "-m", `release: cli ${tag}`]);
+  runInherited("git", ["tag", tag]);
+}
 
 try {
   runInherited("npm", ["publish"], { NPM_CONFIG_OTP: otp });
@@ -83,6 +92,32 @@ function runInherited(command, args, env = {}) {
 function tagExists(tag) {
   const result = spawnSync("git", ["rev-parse", "--verify", "--quiet", tag], { stdio: "ignore" });
   return result.status === 0;
+}
+
+function assertTagAtHead(tag) {
+  const tagCommit = run("git", ["rev-list", "-n", "1", tag]).trim();
+  const headCommit = run("git", ["rev-parse", "HEAD"]).trim();
+  if (tagCommit !== headCommit) {
+    console.error(`Cannot resume: ${tag} does not point at HEAD.`);
+    process.exit(1);
+  }
+}
+
+function assertNpmAuthenticated() {
+  const result = spawnSync("npm", ["whoami"], { encoding: "utf8" });
+  if (result.status !== 0) {
+    console.error("npm is not authenticated. Run `npm login` once, then rerun `npm run release -- <patch|minor|major|resume>`.");
+    process.exit(1);
+  }
+}
+
+function assertNpmOwner() {
+  const result = spawnSync("npm", ["owner", "ls", "@thesethrose/useagents"], { encoding: "utf8" });
+  if (result.status !== 0 || !result.stdout.includes("thesethrose")) {
+    console.error("Current npm account does not appear to own @thesethrose/useagents.");
+    console.error("Run `npm owner ls @thesethrose/useagents` and fix package access before releasing.");
+    process.exit(1);
+  }
 }
 
 async function askOtp() {
