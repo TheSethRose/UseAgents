@@ -95,22 +95,37 @@ export async function resolveLocalSourcePath(source: string): Promise<string> {
 async function installManagedIntegration(name: string, options?: { force?: boolean }): Promise<void> {
   section(`Installing ${name}`);
   const integration = await loadManagedIntegrationFromRegistry(name);
-  const result = await integration.install({ force: options?.force });
-  await upsertIntegrationRecord({
-    name: integration.name,
-    kind: "managed-external",
-    wrapperVersion: integration.wrapperVersion,
-    installedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    upstream: {
-      installed: result.status.endsWith("_installed") || result.status.endsWith("_updated"),
-      version: result.version,
-      binaryPath: result.binaryPath,
-      installMethod: "official-installer",
-      lastCheckedAt: new Date().toISOString(),
-    },
-  });
-  formatIntegrationResult(result);
+
+  // Set environment variable to handle PEP 668 (externally-managed-environment)
+  // this ensures pip-based integrations work out-of-box on macOS/Linux
+  const originalPipFlag = process.env.PIP_BREAK_SYSTEM_PACKAGES;
+  process.env.PIP_BREAK_SYSTEM_PACKAGES = "1";
+
+  try {
+    const result = await integration.install({ force: options?.force });
+    await upsertIntegrationRecord({
+      name: integration.name,
+      kind: "managed-external",
+      wrapperVersion: integration.wrapperVersion,
+      installedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      upstream: {
+        installed: result.status.endsWith("_installed") || result.status.endsWith("_updated"),
+        version: result.version,
+        binaryPath: result.binaryPath,
+        installMethod: "official-installer",
+        lastCheckedAt: new Date().toISOString(),
+      },
+    });
+    formatIntegrationResult(result);
+  } finally {
+    // Restore original state
+    if (originalPipFlag === undefined) {
+      delete process.env.PIP_BREAK_SYSTEM_PACKAGES;
+    } else {
+      process.env.PIP_BREAK_SYSTEM_PACKAGES = originalPipFlag;
+    }
+  }
 }
 
 async function findManifestRoot(extractDir: string): Promise<string> {

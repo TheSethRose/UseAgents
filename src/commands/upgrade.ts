@@ -20,20 +20,32 @@ export async function upgradeCommand(agentName?: string): Promise<void> {
   if (agentName && targets.length === 0) {
     if (await isManagedIntegration(agentName)) {
       const integration = await loadManagedIntegrationFromRegistry(agentName);
-      const result = await integration.update({});
-      await upsertIntegrationRecord({
-        name: integration.name,
-        kind: "managed-external",
-        wrapperVersion: integration.wrapperVersion,
-        updatedAt: new Date().toISOString(),
-        upstream: {
-          installed: result.status.endsWith("_installed") || result.status.endsWith("_updated"),
-          version: result.version,
-          binaryPath: result.binaryPath,
-          lastCheckedAt: new Date().toISOString(),
-        },
-      });
-      formatIntegrationResult(result);
+      
+      const originalPipFlag = process.env.PIP_BREAK_SYSTEM_PACKAGES;
+      process.env.PIP_BREAK_SYSTEM_PACKAGES = "1";
+
+      try {
+        const result = await integration.update({});
+        await upsertIntegrationRecord({
+          name: integration.name,
+          kind: "managed-external",
+          wrapperVersion: integration.wrapperVersion,
+          updatedAt: new Date().toISOString(),
+          upstream: {
+            installed: result.status.endsWith("_installed") || result.status.endsWith("_updated"),
+            version: result.version,
+            binaryPath: result.binaryPath,
+            lastCheckedAt: new Date().toISOString(),
+          },
+        });
+        formatIntegrationResult(result);
+      } finally {
+        if (originalPipFlag === undefined) {
+          delete process.env.PIP_BREAK_SYSTEM_PACKAGES;
+        } else {
+          process.env.PIP_BREAK_SYSTEM_PACKAGES = originalPipFlag;
+        }
+      }
       return;
     }
     throw new UseAgentsError("Agent not found", "agent_not_found", { name: agentName });

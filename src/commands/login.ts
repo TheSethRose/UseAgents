@@ -1,4 +1,4 @@
-import { AUTH_FILE, writePrivateJson } from "../utils/filesystem.js";
+import { AUTH_FILE, readJson, writePrivateJson } from "../utils/filesystem.js";
 import { getRegistryUrl } from "../registry.js";
 import { UseAgentsError } from "../utils/errors.js";
 
@@ -23,6 +23,28 @@ function readStdinLine(): Promise<string> {
 }
 
 export async function loginCommand(): Promise<void> {
+  const registryUrl = getRegistryUrl();
+  const existingAuth = await readJson<{ registryToken?: string; userEmail?: string }>(AUTH_FILE);
+
+  if (existingAuth?.registryToken) {
+    try {
+      const response = await fetch(`${registryUrl.replace(/\/$/, "")}/get-session`, {
+        headers: {
+          Authorization: `Bearer ${existingAuth.registryToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const session = (await response.json()) as { user?: { email?: string } };
+        const email = session.user?.email ?? existingAuth.userEmail ?? "unknown";
+        console.log(`Already logged in as ${email}`);
+        return;
+      }
+    } catch {
+      // Existing token is invalid or registry is unreachable; fall through to re-authenticate.
+    }
+  }
+
   console.log("Authenticate with the UseAgents registry.");
   console.log("Open https://useagents.io/settings.");
   console.log("If prompted, sign in first. Settings will show your registry session token.");
@@ -35,7 +57,6 @@ export async function loginCommand(): Promise<void> {
   }
 
   // Validate token by pinging the registry session endpoint.
-  const registryUrl = getRegistryUrl();
   try {
     const response = await fetch(`${registryUrl.replace(/\/$/, "")}/get-session`, {
       headers: {

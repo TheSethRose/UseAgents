@@ -13,9 +13,21 @@ export async function uninstallCommand(agentName: string): Promise<void> {
 
   if (await isManagedIntegration(agentName)) {
     const integration = await loadManagedIntegrationFromRegistry(agentName);
-    const result = await integration.uninstall();
-    await removeIntegrationRecord(agentName);
-    formatIntegrationResult(result);
+    
+    const originalPipFlag = process.env.PIP_BREAK_SYSTEM_PACKAGES;
+    process.env.PIP_BREAK_SYSTEM_PACKAGES = "1";
+
+    try {
+      const result = await integration.uninstall();
+      await removeIntegrationRecord(agentName);
+      formatIntegrationResult(result);
+    } finally {
+      if (originalPipFlag === undefined) {
+        delete process.env.PIP_BREAK_SYSTEM_PACKAGES;
+      } else {
+        process.env.PIP_BREAK_SYSTEM_PACKAGES = originalPipFlag;
+      }
+    }
     return;
   }
 

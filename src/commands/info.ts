@@ -20,8 +20,20 @@ export async function infoCommand(agentName: string | string[], ...rest: unknown
 
     if (await isManagedIntegration(name)) {
       const integration = await loadManagedIntegrationFromRegistry(name);
-      const result = await integration.info();
-      formatIntegrationResult(result);
+      
+      const originalPipFlag = process.env.PIP_BREAK_SYSTEM_PACKAGES;
+      process.env.PIP_BREAK_SYSTEM_PACKAGES = "1";
+
+      try {
+        const result = await integration.info();
+        formatIntegrationResult(result);
+      } finally {
+        if (originalPipFlag === undefined) {
+          delete process.env.PIP_BREAK_SYSTEM_PACKAGES;
+        } else {
+          process.env.PIP_BREAK_SYSTEM_PACKAGES = originalPipFlag;
+        }
+      }
       continue;
     }
 
