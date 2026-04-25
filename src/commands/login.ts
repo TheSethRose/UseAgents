@@ -24,7 +24,8 @@ function readStdinLine(): Promise<string> {
 
 export async function loginCommand(): Promise<void> {
   console.log("Authenticate with the UseAgents registry.");
-  console.log("Sign in at https://useagents.io/settings to copy your session token.");
+  console.log("Open https://useagents.io/settings.");
+  console.log("If prompted, sign in first. Settings will show your registry session token.");
   console.log("\nPaste your session token: ");
 
   const token = await readStdinLine();
