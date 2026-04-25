@@ -43,6 +43,16 @@ node dist/index.js search hello
 
 Do not use `tsx src/index.ts` for CLI smoke tests; the CLI intentionally rejects invocation names that are not declared binaries.
 
+## Release Workflow
+
+CLI releases are published by the local release script.
+
+1. Update `CHANGELOG.md`.
+2. Run `npm run release`.
+3. Enter the npm OTP when prompted.
+
+The release script bumps the patch version by default, runs checks, builds, smoke tests the built CLI, inspects the package with `npm pack --dry-run`, commits the release, tags it, publishes to npm, and pushes the branch plus tag. Use `npm run release -- minor` or `npm run release -- major` for larger bumps.
+
 ## Pull Request Guidelines
 
 - Describe the user-facing behavior that changed.
