@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `agent login` now validates copied registry session tokens against the public registry session endpoint used by the website settings page.
+- `agent login` now writes local registry auth state with user-only file permissions.
 
 ## [0.3.6] - 2026-04-24
 
@@ -66,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] Verified-email publish requirement for registry writes
 - [x] Immutable releases with deprecate/yank/quarantine flows
 - [x] Registry audit logs for package and version write actions
-- [x] Official curated namespace with admin/maintainer-only publishing
+- [x] Official curated namespace with admin-only publishing
 - [x] Restrict community publishing to direct agents until managed integration provenance is in place
 - [ ] Hide managed integration version display in search/list/detail output by default so wrapper versions are not mistaken for upstream app versions
 - [ ] Improve search with type filters for direct agents vs managed integrations

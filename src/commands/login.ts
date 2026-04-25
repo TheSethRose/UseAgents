@@ -1,4 +1,4 @@
-import { AUTH_FILE, writeJson } from "../utils/filesystem.js";
+import { AUTH_FILE, writePrivateJson } from "../utils/filesystem.js";
 import { getRegistryUrl } from "../registry.js";
 import { UseAgentsError } from "../utils/errors.js";
 
@@ -51,7 +51,7 @@ export async function loginCommand(): Promise<void> {
     const session = (await response.json()) as { user?: { email?: string } };
     const email = session.user?.email ?? "unknown";
 
-    await writeJson(AUTH_FILE, {
+    await writePrivateJson(AUTH_FILE, {
       registryToken: token,
       userEmail: email,
     });

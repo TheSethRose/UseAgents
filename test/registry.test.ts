@@ -46,4 +46,25 @@ describe("registry package helpers", () => {
       status: "yanked",
     }, "1.0.0")).toThrow(/not installable/);
   });
+
+  it("blocks archived and deleted registry packages", () => {
+    const versionInfo = {
+      manifestUrl: "",
+      tarballUrl: "",
+      publishedAt: "",
+      status: "active" as const,
+    };
+
+    for (const status of ["archived", "deleted", "quarantined"] as const) {
+      expect(() => assertRegistryVersionInstallable({
+        name: "@seth/hello-world",
+        type: "direct-agent",
+        description: "test",
+        author: "seth",
+        latest: "1.0.0",
+        status,
+        versions: {},
+      }, versionInfo, "1.0.0")).toThrow(/not installable/);
+    }
+  });
 });

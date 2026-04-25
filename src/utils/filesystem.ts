@@ -67,6 +67,14 @@ export async function writeJson(path: string, data: unknown): Promise<void> {
   await writeFile(path, JSON.stringify(data, null, 2) + "\n", "utf-8");
 }
 
+export async function writePrivateJson(path: string, data: unknown): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, JSON.stringify(data, null, 2) + "\n", {
+    mode: 0o600,
+    encoding: "utf-8",
+  });
+}
+
 export async function appendJsonl(path: string, data: unknown): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, JSON.stringify(data) + "\n", { flag: "a", encoding: "utf-8" });
